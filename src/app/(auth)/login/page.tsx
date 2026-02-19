@@ -21,7 +21,7 @@ export default function LoginPage() {
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await signIn('resend', { email, callbackUrl: '/onboarding/survey' });
+    await signIn('resend', { email, callbackUrl: '/survey' });
     setLoading(false);
   }
 
@@ -42,7 +42,7 @@ export default function LoginPage() {
   async function handlePhoneSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await signIn('phone', { phone, code, callbackUrl: '/onboarding/survey' });
+    await signIn('phone', { phone, code, callbackUrl: '/survey' });
     setLoading(false);
   }
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
           {/* Social Buttons */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={() => signIn('google', { callbackUrl: '/onboarding/survey' })}
+              onClick={() => signIn('google', { callbackUrl: '/survey' })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white text-gray-900 font-semibold hover:bg-gray-100 transition"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export default function LoginPage() {
             </button>
 
             <button
-              onClick={() => signIn('apple', { callbackUrl: '/onboarding/survey' })}
+              onClick={() => signIn('apple', { callbackUrl: '/survey' })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-black text-white font-semibold border border-white/10 hover:bg-gray-900 transition"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -213,7 +213,7 @@ export default function LoginPage() {
             setLoading(true);
             const res = await signIn('demo', { demo: '1', redirect: false });
             if (res?.ok) {
-              window.location.href = '/onboarding/survey';
+              window.location.href = '/survey';
             } else {
               console.error('Demo sign-in failed:', res?.error);
               setLoading(false);

@@ -33,8 +33,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // Redirect to onboarding if not completed
-  if (!token.onboardingDone && !pathname.startsWith('/onboarding')) {
-    return NextResponse.redirect(new URL('/onboarding/survey', req.url));
+  if (!token.onboardingDone && pathname !== '/survey' && pathname !== '/welcome') {
+    return NextResponse.redirect(new URL('/survey', req.url));
   }
 
   // Admin routes require admin role

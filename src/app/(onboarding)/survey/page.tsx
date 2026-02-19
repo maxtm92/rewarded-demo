@@ -130,7 +130,7 @@ export default function SurveyPage() {
         body: JSON.stringify(finalAnswers),
       });
       if (res.ok) {
-        router.push('/onboarding/welcome');
+        router.push('/welcome');
       }
     } finally {
       setLoading(false);
