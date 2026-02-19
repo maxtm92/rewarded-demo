@@ -18,7 +18,12 @@ export async function middleware(req: NextRequest) {
   }
 
   // Check JWT token (doesn't require Prisma / Node.js runtime)
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const isSecure = req.nextUrl.protocol === 'https:';
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    secureCookie: isSecure,
+  });
 
   // Require authentication
   if (!token) {
