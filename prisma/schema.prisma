@@ -1,0 +1,321 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth.js managed tables ─────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Core user ──────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  phone         String?   @unique
+
+  // App-specific fields
+  balanceCents    Int      @default(0) @map("balance_cents")
+  lifetimeCents   Int      @default(0) @map("lifetime_cents")
+  marketingOptIn  Boolean  @default(false) @map("marketing_opt_in")
+  onboardingDone  Boolean  @default(false) @map("onboarding_done")
+  profileComplete Boolean  @default(false) @map("profile_complete")
+  role            UserRole @default(USER)
+  pushToken       String?  @map("push_token")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  accounts                Account[]
+  sessions                Session[]
+  transactions            Transaction[]
+  postbacks               Postback[]
+  surveyResponse          SurveyResponse?
+  utmCaptures             UtmCapture[]
+  withdrawals             Withdrawal[]
+  premiumOfferCompletions PremiumOfferCompletion[]
+
+  @@map("users")
+}
+
+// ─── Transactions & wallet ──────────────────────────────────────────
+
+enum TransactionType {
+  EARNING
+  WITHDRAWAL
+  BONUS
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+model Transaction {
+  id               String            @id @default(cuid())
+  userId           String            @map("user_id")
+  type             TransactionType
+  amountCents      Int               @map("amount_cents")
+  balanceAfterCents Int              @map("balance_after_cents")
+  source           String            // offerwall slug, "withdrawal", "signup_bonus", etc.
+  description      String?
+  status           TransactionStatus @default(COMPLETED)
+
+  postbackId String?  @unique @map("postback_id")
+  postback   Postback? @relation(fields: [postbackId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("transactions")
+}
+
+enum WithdrawalMethod {
+  PAYPAL
+  GIFT_CARD
+  CRYPTO
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+model Withdrawal {
+  id          String           @id @default(cuid())
+  userId      String           @map("user_id")
+  amountCents Int              @map("amount_cents")
+  method      WithdrawalMethod
+  status      WithdrawalStatus @default(PENDING)
+  note        String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("withdrawals")
+}
+
+// ─── Offerwalls & postbacks ─────────────────────────────────────────
+
+model OfferWall {
+  id               String  @id @default(cuid())
+  slug             String  @unique
+  name             String
+  description      String?
+  logoUrl          String? @map("logo_url")
+  isActive         Boolean @default(true) @map("is_active")
+  iframeUrl        String? @map("iframe_url")
+  redirectUrl      String? @map("redirect_url")
+  postbackSecret   String  @map("postback_secret")
+  payoutMultiplier Float   @default(1.0) @map("payout_multiplier")
+  sortOrder        Int     @default(0) @map("sort_order")
+  icon             String  @default("💰")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  postbacks Postback[]
+
+  @@map("offer_walls")
+}
+
+enum PostbackStatus {
+  CREDITED
+  REVERSED
+  REJECTED
+}
+
+model Postback {
+  id          String         @id @default(cuid())
+  offerWallId String         @map("offer_wall_id")
+  userId      String         @map("user_id")
+  externalId  String         @map("external_id")
+  offerId     String?        @map("offer_id")
+  offerName   String?        @map("offer_name")
+  payoutCents Int            @map("payout_cents")
+  status      PostbackStatus @default(CREDITED)
+  ipAddress   String?        @map("ip_address")
+  rawPayload  Json?          @map("raw_payload")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  offerWall   OfferWall    @relation(fields: [offerWallId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction Transaction?
+
+  @@unique([offerWallId, externalId])
+  @@index([userId])
+  @@map("postbacks")
+}
+
+// ─── Onboarding survey ──────────────────────────────────────────────
+
+model SurveyResponse {
+  id            String    @id @default(cuid())
+  userId        String    @unique @map("user_id")
+  ageRange      String?   @map("age_range")
+  gender        String?
+  interests     String[]  @default([])
+  income        String?
+  country       String?
+  zipCode       String?   @map("zip_code")
+  completedAt   DateTime? @map("completed_at")
+  bonusCredited Boolean   @default(false) @map("bonus_credited")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("survey_responses")
+}
+
+// ─── UTM tracking ───────────────────────────────────────────────────
+
+model UtmCapture {
+  id         String  @id @default(cuid())
+  userId     String  @map("user_id")
+  source     String? @map("utm_source")
+  medium     String? @map("utm_medium")
+  campaign   String? @map("utm_campaign")
+  term       String? @map("utm_term")
+  content    String? @map("utm_content")
+  landingUrl String? @map("landing_url")
+  referrer   String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("utm_captures")
+}
+
+// ─── Marketing angles (split testing) ───────────────────────────────
+
+model MarketingAngle {
+  id             String  @id @default(cuid())
+  slug           String  @unique
+  name           String
+  headline       String
+  subheadline    String?
+  description    String?
+  ctaText        String  @map("cta_text")
+  imageUrl       String? @map("image_url")
+  targetAudience String? @map("target_audience")
+  isActive       Boolean @default(true) @map("is_active")
+  weight         Int     @default(1)
+
+  impressions Int @default(0)
+  clicks      Int @default(0)
+  conversions Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("marketing_angles")
+}
+
+// ─── Premium offers (lead gen) ──────────────────────────────────────
+
+model PremiumOffer {
+  id             String  @id @default(cuid())
+  slug           String  @unique
+  name           String
+  headline       String
+  description    String
+  payoutCents    Int     @map("payout_cents")
+  advertiserName String? @map("advertiser_name")
+  externalUrl    String  @map("external_url")
+  imageUrl       String? @map("image_url")
+  category       String  // "auto_insurance", "credit_card", "education", etc.
+  isActive       Boolean @default(true) @map("is_active")
+  sortOrder      Int     @default(0) @map("sort_order")
+  icon           String  @default("💰")
+
+  angleId String? @map("angle_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  completions PremiumOfferCompletion[]
+
+  @@map("premium_offers")
+}
+
+model PremiumOfferCompletion {
+  id         String @id @default(cuid())
+  userId     String @map("user_id")
+  offerId    String @map("offer_id")
+  status     String @default("PENDING")
+  earnedCents Int   @default(0) @map("earned_cents")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer PremiumOffer @relation(fields: [offerId], references: [id])
+
+  @@unique([userId, offerId])
+  @@map("premium_offer_completions")
+}

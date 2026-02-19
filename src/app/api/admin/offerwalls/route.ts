@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    return null;
+  }
+  return session;
+}
+
+// GET - List all offerwalls
+export async function GET() {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const walls = await prisma.offerWall.findMany({
+    orderBy: { sortOrder: 'asc' },
+    include: { _count: { select: { postbacks: true } } },
+  });
+  return NextResponse.json(walls);
+}
+
+// POST - Create offerwall
+export async function POST(request: NextRequest) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const body = await request.json();
+  const wall = await prisma.offerWall.create({
+    data: {
+      slug: body.slug,
+      name: body.name,
+      description: body.description || null,
+      icon: body.icon || '💰',
+      iframeUrl: body.iframeUrl || null,
+      redirectUrl: body.redirectUrl || null,
+      postbackSecret: body.postbackSecret,
+      payoutMultiplier: body.payoutMultiplier ?? 1.0,
+      sortOrder: body.sortOrder ?? 0,
+    },
+  });
+  return NextResponse.json(wall);
+}
+
+// PATCH - Update offerwall
+export async function PATCH(request: NextRequest) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const body = await request.json();
+  const { id, ...data } = body;
+
+  const wall = await prisma.offerWall.update({
+    where: { id },
+    data,
+  });
+  return NextResponse.json(wall);
+}
+
+// DELETE - Delete offerwall
+export async function DELETE(request: NextRequest) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { id } = await request.json();
+  await prisma.offerWall.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}
