@@ -205,6 +205,18 @@ export default function LoginPage() {
           </label>
         </div>
 
+        {/* Demo / Skip Button */}
+        <button
+          onClick={async () => {
+            setLoading(true);
+            await signIn('demo', { callbackUrl: '/onboarding/survey' });
+          }}
+          disabled={loading}
+          className="w-full mt-4 py-3 rounded-xl border border-dashed border-amber-500/40 text-amber-400 text-sm font-medium hover:bg-amber-500/10 transition disabled:opacity-50"
+        >
+          Skip Sign Up (Demo Admin)
+        </button>
+
         <p className="text-center text-gray-500 text-xs mt-6">
           By signing up, you agree to our Terms of Service and Privacy Policy.
         </p>

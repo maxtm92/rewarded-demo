@@ -22,6 +22,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       from: process.env.EMAIL_FROM || 'noreply@rewarded.com',
     }),
     Credentials({
+      id: 'demo',
+      name: 'Demo',
+      credentials: {
+        demo: { label: 'Demo', type: 'hidden' },
+      },
+      async authorize() {
+        // Upsert a demo admin user for testing
+        const user = await prisma.user.upsert({
+          where: { email: 'demo@rewarded.com' },
+          update: { role: 'ADMIN' },
+          create: {
+            email: 'demo@rewarded.com',
+            name: 'Demo Admin',
+            role: 'ADMIN',
+            onboardingDone: false,
+          },
+        });
+        return { id: user.id, name: user.name, email: user.email, image: user.image };
+      },
+    }),
+    Credentials({
       id: 'phone',
       name: 'Phone',
       credentials: {
