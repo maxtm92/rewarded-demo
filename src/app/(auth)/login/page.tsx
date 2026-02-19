@@ -213,7 +213,7 @@ export default function LoginPage() {
             setLoading(true);
             const res = await signIn('demo', { demo: '1', redirect: false });
             if (res?.ok) {
-              router.push('/onboarding/survey');
+              window.location.href = '/onboarding/survey';
             } else {
               console.error('Demo sign-in failed:', res?.error);
               setLoading(false);
