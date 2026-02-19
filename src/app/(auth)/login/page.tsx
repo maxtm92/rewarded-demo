@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [codeSent, setCodeSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(true);
+  const router = useRouter();
 
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -209,12 +211,18 @@ export default function LoginPage() {
         <button
           onClick={async () => {
             setLoading(true);
-            await signIn('demo', { callbackUrl: '/onboarding/survey' });
+            const res = await signIn('demo', { demo: '1', redirect: false });
+            if (res?.ok) {
+              router.push('/onboarding/survey');
+            } else {
+              console.error('Demo sign-in failed:', res?.error);
+              setLoading(false);
+            }
           }}
           disabled={loading}
           className="w-full mt-4 py-3 rounded-xl border border-dashed border-amber-500/40 text-amber-400 text-sm font-medium hover:bg-amber-500/10 transition disabled:opacity-50"
         >
-          Skip Sign Up (Demo Admin)
+          {loading ? 'Signing in...' : 'Skip Sign Up (Demo Admin)'}
         </button>
 
         <p className="text-center text-gray-500 text-xs mt-6">
