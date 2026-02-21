@@ -58,7 +58,6 @@ function ProfileIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 const navItems = [
   { href: '/earn', label: 'Earn', icon: EarnIcon },
-  { href: '/offers', label: 'Offers', icon: OffersIcon },
   { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { href: '/withdraw', label: 'Cash Out', icon: CashOutIcon },
   { href: '/profile', label: 'Profile', icon: ProfileIcon },
