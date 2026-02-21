@@ -19,16 +19,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen pb-20">
       {/* Top Bar */}
-      <header className="sticky top-0 z-40 bg-[#0A0E1A]/80 backdrop-blur-xl border-b border-white/5">
+      <header className="sticky top-0 z-40 bg-[#1d1e30]/95 backdrop-blur-xl border-b border-[#393e56]">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/earn" className="flex items-center gap-2">
             <span className="text-xl">💰</span>
-            <span className="font-bold">Rewarded</span>
+            <span className="font-bold text-white">Rewarded</span>
           </Link>
           {session?.user && (
             <div className="flex items-center gap-3">
-              <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-emerald-400 font-semibold text-sm">
+              <div className="px-3 py-1.5 rounded-full bg-[#01d676] shadow-sm">
+                <span className="text-black font-semibold text-sm">
                   {formatCurrency(session.user.balanceCents)}
                 </span>
               </div>
@@ -43,7 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0A0E1A]/90 backdrop-blur-xl border-t border-white/5">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#1d1e30] border-t border-[#393e56]">
         <div className="max-w-7xl mx-auto flex">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${
-                  isActive ? 'text-emerald-400' : 'text-gray-500 hover:text-gray-300'
+                  isActive ? 'text-[#01d676]' : 'text-[#787ead] hover:text-[#a9a9ca]'
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>

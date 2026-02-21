@@ -34,8 +34,8 @@ export default async function OfferWallPage({ params }: Props) {
       <div className="flex items-center gap-3 mb-6">
         <span className="text-3xl">{wall.icon}</span>
         <div>
-          <h1 className="text-xl font-bold">{wall.name}</h1>
-          <p className="text-gray-400 text-sm">{wall.description}</p>
+          <h1 className="text-xl font-bold text-white">{wall.name}</h1>
+          <p className="text-[#a9a9ca] text-sm">{wall.description}</p>
         </div>
       </div>
 

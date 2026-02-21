@@ -1,15 +1,15 @@
 @import 'tailwindcss';
 
 @theme inline {
-  --font-sans: var(--font-inter);
-  --color-primary: #10b981;
-  --color-primary-dark: #059669;
-  --color-accent: #fbbf24;
-  --color-bg-dark: #0A0E1A;
-  --color-bg-card: #151929;
-  --color-bg-card-hover: #1c2237;
-  --color-border: #1e293b;
-  --color-text-muted: #94a3b8;
+  --font-sans: var(--font-poppins);
+  --color-primary: #01d676;
+  --color-primary-dark: #01ff97;
+  --color-accent: #fac401;
+  --color-bg-dark: #141523;
+  --color-bg-card: #1d1d2e;
+  --color-bg-card-hover: #252539;
+  --color-border: #393e56;
+  --color-text-muted: #a9a9ca;
 }
 
 * {
@@ -18,36 +18,38 @@
 
 body {
   background: var(--color-bg-dark);
-  color: #f1f5f9;
+  color: #f0f6ff;
   min-height: 100vh;
 }
 
-/* Glow effects */
 .glow-green {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 0 60px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 4px 14px rgba(1, 214, 118, 0.25);
 }
 
 .glow-gold {
-  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3), 0 0 60px rgba(251, 191, 36, 0.1);
+  box-shadow: 0 4px 14px rgba(250, 196, 1, 0.25);
 }
 
 .text-glow-green {
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  text-shadow: 0 0 20px rgba(1, 214, 118, 0.4);
 }
 
 .text-glow-gold {
-  text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+  text-shadow: 0 0 20px rgba(250, 196, 1, 0.4);
 }
 
-/* Gradient backgrounds */
+/* Dark gradient background with subtle green orbs */
 .bg-gradient-radial {
-  background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.15) 0%, transparent 60%);
+  background:
+    radial-gradient(circle at 10% 80%, rgba(1, 214, 118, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 90% 20%, rgba(1, 214, 118, 0.05) 0%, transparent 45%),
+    #141523;
 }
 
 /* Animated pulse for CTAs */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-  50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.7); }
+  0%, 100% { box-shadow: 0 4px 14px rgba(1, 214, 118, 0.3); }
+  50% { box-shadow: 0 4px 24px rgba(1, 214, 118, 0.5); }
 }
 
 .animate-pulse-glow {

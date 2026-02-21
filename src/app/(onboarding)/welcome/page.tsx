@@ -30,13 +30,13 @@ export default function WelcomePage() {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', delay: 0.3, stiffness: 200 }}
-        className="w-24 h-24 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 flex items-center justify-center mx-auto mb-8 glow-gold"
+        className="w-24 h-24 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 flex items-center justify-center mx-auto mb-8 shadow-lg shadow-amber-500/25"
       >
         <span className="text-5xl">🎉</span>
       </motion.div>
 
       <motion.h1
-        className="text-3xl font-extrabold mb-4"
+        className="text-3xl font-extrabold text-white mb-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -50,10 +50,10 @@ export default function WelcomePage() {
         transition={{ delay: 0.7 }}
         className="mb-8"
       >
-        <div className="text-5xl font-extrabold text-emerald-400 text-glow-green mb-2">
+        <div className="text-5xl font-extrabold text-[#01d676] mb-2">
           <CountUp from={0} to={5} prefix="$" decimals={2} duration={1.5} />
         </div>
-        <p className="text-gray-400">has been added to your balance</p>
+        <p className="text-[#a9a9ca]">has been added to your balance</p>
       </motion.div>
 
       <motion.div
@@ -64,12 +64,12 @@ export default function WelcomePage() {
       >
         <button
           onClick={() => router.push('/earn')}
-          className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-lg transition animate-pulse-glow"
+          className="w-full py-4 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-bold text-lg transition shadow-lg shadow-[#01d676]/25"
         >
           Start Earning Now →
         </button>
 
-        <p className="text-gray-500 text-sm">
+        <p className="text-[#a9a9ca] text-sm">
           Complete offers to earn more and cash out anytime
         </p>
       </motion.div>

@@ -156,8 +156,8 @@ export default function SurveyPage() {
           transition={{ duration: 0.25 }}
         >
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">{step.title}</h1>
-            <p className="text-gray-400">{step.subtitle}</p>
+            <h1 className="text-2xl font-bold text-white mb-2">{step.title}</h1>
+            <p className="text-[#a9a9ca]">{step.subtitle}</p>
           </div>
 
           <div className={`grid gap-3 ${step.options.length > 4 ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -168,15 +168,15 @@ export default function SurveyPage() {
                 disabled={loading}
                 className={`flex items-center gap-3 p-4 rounded-xl border transition text-left ${
                   isSelected(opt.value)
-                    ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                    : 'border-white/10 bg-[#151929] text-gray-300 hover:border-white/20'
+                    ? 'border-[#01d676] bg-[#01d676]/10 text-white'
+                    : 'border-[#393e56] bg-[#1d1d2e] text-white hover:border-[#01d676]/50'
                 }`}
               >
                 <span className="text-2xl">{opt.icon}</span>
                 <span className="font-medium">{opt.label}</span>
                 {isSelected(opt.value) && (
                   <motion.span
-                    className="ml-auto text-emerald-400"
+                    className="ml-auto text-[#01d676]"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                   >
@@ -191,7 +191,7 @@ export default function SurveyPage() {
             <button
               onClick={handleMultiNext}
               disabled={loading || !((answers[step.field] as string[])?.length > 0)}
-              className="w-full mt-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-semibold transition disabled:opacity-50"
+              className="w-full mt-6 py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50"
             >
               {loading ? 'Saving...' : isLastStep ? 'Finish & Claim Bonus' : 'Continue'}
             </button>
@@ -200,7 +200,7 @@ export default function SurveyPage() {
           {currentStep > 0 && (
             <button
               onClick={() => setCurrentStep((s) => s - 1)}
-              className="w-full mt-3 py-3 rounded-xl text-gray-400 hover:text-white transition text-sm"
+              className="w-full mt-3 py-3 rounded-xl text-[#787ead] hover:text-white transition text-sm"
             >
               ← Back
             </button>

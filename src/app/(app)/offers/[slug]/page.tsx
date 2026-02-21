@@ -44,39 +44,39 @@ export default async function PremiumOfferPage({ params }: Props) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-b from-amber-500/20 to-amber-600/5 flex items-center justify-center text-4xl mx-auto mb-4">
+        <div className="w-20 h-20 rounded-2xl bg-[#fac401]/10 flex items-center justify-center text-4xl mx-auto mb-4">
           {offer.icon}
         </div>
-        <h1 className="text-2xl font-bold mb-2">{angle?.headline || offer.headline}</h1>
-        <p className="text-gray-400 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold text-white mb-2">{angle?.headline || offer.headline}</h1>
+        <p className="text-[#a9a9ca] max-w-md mx-auto">
           {angle?.description || offer.description}
         </p>
       </div>
 
-      <div className="p-6 rounded-2xl bg-[#151929] border border-white/5 mb-6">
+      <div className="p-6 rounded-2xl bg-[#1d1d2e] border border-[#393e56] mb-6">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-gray-400">Reward</span>
-          <span className="text-2xl font-bold text-amber-400 text-glow-gold">
+          <span className="text-[#787ead]">Reward</span>
+          <span className="text-2xl font-bold text-[#fac401]">
             {formatCurrency(offer.payoutCents)}
           </span>
         </div>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-gray-400">Category</span>
-          <span className="text-sm font-medium capitalize">{offer.category.replace('_', ' ')}</span>
+          <span className="text-[#787ead]">Category</span>
+          <span className="text-sm font-medium text-white capitalize">{offer.category.replace('_', ' ')}</span>
         </div>
         {offer.advertiserName && (
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">By</span>
-            <span className="text-sm font-medium">{offer.advertiserName}</span>
+            <span className="text-[#787ead]">By</span>
+            <span className="text-sm font-medium text-white">{offer.advertiserName}</span>
           </div>
         )}
       </div>
 
       {completion ? (
-        <div className="text-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+        <div className="text-center p-6 rounded-2xl bg-[#01d676]/10 border border-[#01d676]/30">
           <span className="text-3xl mb-2 block">✅</span>
-          <p className="font-semibold text-emerald-400">You&apos;ve already completed this offer</p>
-          <p className="text-gray-400 text-sm mt-1">Earned: {formatCurrency(completion.earnedCents)}</p>
+          <p className="font-semibold text-[#01d676]">You&apos;ve already completed this offer</p>
+          <p className="text-[#a9a9ca] text-sm mt-1">Earned: {formatCurrency(completion.earnedCents)}</p>
         </div>
       ) : (
         <OfferCTA
