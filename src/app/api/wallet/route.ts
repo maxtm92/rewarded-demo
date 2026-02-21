@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const withdrawSchema = z.object({
-  method: z.enum(['PAYPAL', 'GIFT_CARD', 'CRYPTO']),
+  method: z.enum(['PAYPAL', 'VENMO', 'GOOGLE_PLAY', 'AMAZON', 'APPLE', 'VISA', 'BANK', 'BTC', 'LTC', 'SOL', 'DOGE']),
   amountCents: z.number().int().min(500),
+  destination: z.string().min(1, 'Destination is required'),
 });
 
 // POST - Request withdrawal
@@ -17,6 +18,21 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const data = withdrawSchema.parse(body);
+
+  // Rate limiting: max 3 withdrawals per hour
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const recentCount = await prisma.withdrawal.count({
+    where: {
+      userId: session.user.id,
+      createdAt: { gte: oneHourAgo },
+    },
+  });
+  if (recentCount >= 3) {
+    return NextResponse.json(
+      { error: 'Too many withdrawal requests. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': '3600' } }
+    );
+  }
 
   // Atomic withdrawal
   try {
@@ -37,6 +53,7 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           amountCents: data.amountCents,
           method: data.method,
+          destination: data.destination,
           status: 'PENDING',
         },
       });
@@ -49,7 +66,7 @@ export async function POST(request: NextRequest) {
           amountCents: data.amountCents,
           balanceAfterCents: newBalance,
           source: 'withdrawal',
-          description: `${data.method} withdrawal`,
+          description: `${data.method} withdrawal to ${data.destination}`,
           status: 'COMPLETED',
         },
       });

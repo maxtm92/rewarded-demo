@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { formatCurrency } from '@/lib/utils';
+import UserAdminActions from '@/components/admin/UserAdminActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,6 +113,15 @@ export default async function UserDetailPage({ params }: Props) {
           </div>
         </div>
       )}
+
+      {/* Admin Actions */}
+      <div className="mb-8">
+        <UserAdminActions
+          userId={user.id}
+          isBanned={user.isBanned}
+          currentBalanceCents={user.balanceCents}
+        />
+      </div>
 
       {/* Transactions */}
       <div>

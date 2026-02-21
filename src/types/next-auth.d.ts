@@ -11,6 +11,10 @@ declare module 'next-auth' {
       onboardingDone: boolean;
       role: string;
       profileComplete: boolean;
+      currentStreak: number;
+      lastLoginDate: string | null;
+      referralCode: string | null;
+      isBanned: boolean;
     };
   }
 }
@@ -22,5 +26,9 @@ declare module 'next-auth/jwt' {
     onboardingDone?: boolean;
     role?: string;
     profileComplete?: boolean;
+    currentStreak?: number;
+    lastLoginDate?: string | null;
+    referralCode?: string | null;
+    isBanned?: boolean;
   }
 }

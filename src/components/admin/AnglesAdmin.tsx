@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Angle {
   id: string;
@@ -18,27 +19,85 @@ interface Angle {
   conversions: number;
 }
 
+const emptyForm = {
+  slug: '', name: '', headline: '', subheadline: '', ctaText: 'Get Started', weight: '1',
+};
+
 export default function AnglesAdmin({ initialAngles }: { initialAngles: Angle[] }) {
   const router = useRouter();
   const [angles, setAngles] = useState(initialAngles);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({
-    slug: '', name: '', headline: '', subheadline: '', ctaText: 'Get Started', weight: '1',
-  });
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [resetId, setResetId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await fetch('/api/admin/angles', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, weight: parseInt(form.weight) }),
+  function handleEdit(angle: Angle) {
+    setEditingId(angle.id);
+    setShowForm(true);
+    setForm({
+      slug: angle.slug,
+      name: angle.name,
+      headline: angle.headline,
+      subheadline: angle.subheadline || '',
+      ctaText: angle.ctaText,
+      weight: String(angle.weight),
     });
+  }
+
+  function handleCancel() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const payload = { ...form, weight: parseInt(form.weight) };
+
+    const res = await fetch('/api/admin/angles', {
+      method: editingId ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload),
+    });
+
     if (res.ok) {
-      toast.success('Angle created');
-      setShowAdd(false);
-      setForm({ slug: '', name: '', headline: '', subheadline: '', ctaText: 'Get Started', weight: '1' });
+      toast.success(editingId ? 'Angle updated' : 'Angle created');
+      handleCancel();
       router.refresh();
+    } else {
+      toast.error('Failed to save');
     }
+  }
+
+  async function handleDelete() {
+    if (!deleteId) return;
+    const res = await fetch('/api/admin/angles', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: deleteId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast.success('Angle deleted');
+      setDeleteId(null);
+      router.refresh();
+    } else {
+      toast.error(data.error || 'Failed to delete');
+      setDeleteId(null);
+    }
+  }
+
+  async function handleResetStats() {
+    if (!resetId) return;
+    await fetch('/api/admin/angles', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: resetId, resetStats: true }),
+    });
+    toast.success('Stats reset');
+    setResetId(null);
+    router.refresh();
   }
 
   async function toggleActive(id: string, isActive: boolean) {
@@ -53,14 +112,14 @@ export default function AnglesAdmin({ initialAngles }: { initialAngles: Angle[] 
   return (
     <div>
       <button
-        onClick={() => setShowAdd(!showAdd)}
+        onClick={() => showForm ? handleCancel() : setShowForm(true)}
         className="mb-4 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm transition"
       >
-        {showAdd ? 'Cancel' : '+ Add Angle'}
+        {showForm ? 'Cancel' : '+ Add Angle'}
       </button>
 
-      {showAdd && (
-        <form onSubmit={handleAdd} className="p-6 rounded-xl bg-[#151929] border border-white/5 mb-6 grid grid-cols-2 gap-4">
+      {showForm && (
+        <form onSubmit={handleSubmit} className="p-6 rounded-xl bg-[#151929] border border-white/5 mb-6 grid grid-cols-2 gap-4">
           {(['slug', 'name', 'headline', 'subheadline', 'ctaText', 'weight'] as const).map((field) => (
             <div key={field}>
               <label className="text-xs text-gray-400 mb-1 block capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
@@ -74,7 +133,7 @@ export default function AnglesAdmin({ initialAngles }: { initialAngles: Angle[] 
           ))}
           <div className="col-span-2">
             <button type="submit" className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm">
-              Create Angle
+              {editingId ? 'Update Angle' : 'Create Angle'}
             </button>
           </div>
         </form>
@@ -92,6 +151,7 @@ export default function AnglesAdmin({ initialAngles }: { initialAngles: Angle[] 
               <th className="text-center p-3 text-gray-400 font-medium">CTR</th>
               <th className="text-center p-3 text-gray-400 font-medium">Conv.</th>
               <th className="text-center p-3 text-gray-400 font-medium">Active</th>
+              <th className="text-center p-3 text-gray-400 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -117,12 +177,48 @@ export default function AnglesAdmin({ initialAngles }: { initialAngles: Angle[] 
                       {angle.isActive ? 'Active' : 'Off'}
                     </button>
                   </td>
+                  <td className="p-3 text-center">
+                    <div className="flex gap-1 justify-center">
+                      <button onClick={() => handleEdit(angle)}
+                        className="px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-xs hover:bg-blue-500/20 transition">
+                        Edit
+                      </button>
+                      <button onClick={() => setResetId(angle.id)}
+                        className="px-2 py-1 rounded bg-amber-500/10 text-amber-400 text-xs hover:bg-amber-500/20 transition">
+                        Reset
+                      </button>
+                      <button onClick={() => setDeleteId(angle.id)}
+                        className="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete Angle"
+        description="Are you sure you want to delete this angle? This cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={!!resetId}
+        title="Reset Stats"
+        description="This will zero out impressions, clicks, and conversions for this angle. Useful for restarting A/B tests."
+        confirmLabel="Reset Stats"
+        confirmVariant="danger"
+        onConfirm={handleResetStats}
+        onCancel={() => setResetId(null)}
+      />
     </div>
   );
 }

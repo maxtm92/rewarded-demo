@@ -1,23 +1,68 @@
 import { prisma } from '@/lib/prisma';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
+import PaginationControls from '@/components/admin/PaginationControls';
 
 export const dynamic = 'force-dynamic';
 
-export default async function UsersPage() {
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-    include: {
-      surveyResponse: { select: { ageRange: true, country: true } },
-      utmCaptures: { select: { source: true }, take: 1 },
-      _count: { select: { transactions: true, postbacks: true } },
-    },
-  });
+const PER_PAGE = 25;
+
+interface Props {
+  searchParams: Promise<{ page?: string; search?: string }>;
+}
+
+export default async function UsersPage({ searchParams }: Props) {
+  const { page: pageStr, search } = await searchParams;
+  const page = Math.max(1, parseInt(pageStr || '1', 10));
+
+  const where = search
+    ? {
+        OR: [
+          { email: { contains: search, mode: 'insensitive' as const } },
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { phone: { contains: search } },
+        ],
+      }
+    : {};
+
+  const [users, totalCount] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+      include: {
+        surveyResponse: { select: { ageRange: true, country: true } },
+        utmCaptures: { select: { source: true }, take: 1 },
+        _count: { select: { transactions: true, postbacks: true } },
+      },
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / PER_PAGE);
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Users ({users.length})</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Users ({totalCount})</h1>
+        <a
+          href="/api/admin/export?type=users"
+          className="px-4 py-2 rounded-lg bg-[#2f3043] text-sm text-gray-300 hover:bg-[#42435a] transition"
+        >
+          Export CSV
+        </a>
+      </div>
+
+      {/* Search */}
+      <form className="mb-4">
+        <input
+          name="search"
+          defaultValue={search || ''}
+          placeholder="Search by name, email, or phone..."
+          className="w-full max-w-md px-4 py-2.5 rounded-lg bg-[#151929] border border-white/5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+        />
+      </form>
 
       <div className="rounded-xl bg-[#151929] border border-white/5 overflow-auto">
         <table className="w-full text-sm">
@@ -29,6 +74,7 @@ export default async function UsersPage() {
               <th className="text-right p-3 text-gray-400 font-medium">Balance</th>
               <th className="text-right p-3 text-gray-400 font-medium">Lifetime</th>
               <th className="text-center p-3 text-gray-400 font-medium">Txns</th>
+              <th className="text-center p-3 text-gray-400 font-medium">Status</th>
               <th className="text-left p-3 text-gray-400 font-medium">Joined</th>
             </tr>
           </thead>
@@ -56,14 +102,28 @@ export default async function UsersPage() {
                 </td>
                 <td className="p-3 text-right">{formatCurrency(user.lifetimeCents)}</td>
                 <td className="p-3 text-center">{user._count.transactions}</td>
+                <td className="p-3 text-center">
+                  {user.isBanned ? (
+                    <span className="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-400">Banned</span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400">Active</span>
+                  )}
+                </td>
                 <td className="p-3 text-gray-400 text-xs">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
               </tr>
             ))}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-gray-500">No users found</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      <PaginationControls currentPage={page} totalPages={totalPages} totalItems={totalCount} />
     </div>
   );
 }

@@ -33,3 +33,19 @@ export async function PATCH(request: NextRequest) {
   const offer = await prisma.premiumOffer.update({ where: { id }, data });
   return NextResponse.json(offer);
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { id } = await request.json();
+
+  const completions = await prisma.premiumOfferCompletion.count({ where: { offerId: id } });
+  if (completions > 0) {
+    return NextResponse.json(
+      { error: `Cannot delete: ${completions} completion(s) exist. Deactivate instead.` },
+      { status: 400 }
+    );
+  }
+
+  await prisma.premiumOffer.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}

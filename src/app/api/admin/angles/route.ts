@@ -32,7 +32,32 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  const { id, ...data } = await request.json();
+  const { id, resetStats, ...data } = await request.json();
+
+  if (resetStats) {
+    const angle = await prisma.marketingAngle.update({
+      where: { id },
+      data: { impressions: 0, clicks: 0, conversions: 0 },
+    });
+    return NextResponse.json(angle);
+  }
+
   const angle = await prisma.marketingAngle.update({ where: { id }, data });
   return NextResponse.json(angle);
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const { id } = await request.json();
+
+  const linkedOffers = await prisma.premiumOffer.count({ where: { angleId: id } });
+  if (linkedOffers > 0) {
+    return NextResponse.json(
+      { error: `Cannot delete: ${linkedOffers} offer(s) still reference this angle` },
+      { status: 400 }
+    );
+  }
+
+  await prisma.marketingAngle.delete({ where: { id } });
+  return NextResponse.json({ success: true });
 }

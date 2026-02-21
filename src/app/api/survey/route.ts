@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { REFERRAL_COMMISSION_RATE } from '@/lib/referral';
+import { checkAndAwardAchievements } from '@/lib/achievements';
 
 const surveySchema = z.object({
   ageRange: z.string().optional(),
@@ -76,6 +78,36 @@ export async function POST(request: NextRequest) {
           onboardingDone: true,
         },
       });
+
+      // Credit referral bonus to referrer if applicable
+      if (user.referredById) {
+        const referralBonus = Math.round(SIGNUP_BONUS_CENTS * REFERRAL_COMMISSION_RATE);
+        if (referralBonus > 0) {
+          const referrer = await tx.user.findUnique({ where: { id: user.referredById } });
+          if (referrer) {
+            await tx.transaction.create({
+              data: {
+                userId: referrer.id,
+                type: 'BONUS',
+                amountCents: referralBonus,
+                balanceAfterCents: referrer.balanceCents + referralBonus,
+                source: 'referral',
+                description: `Referral bonus: friend completed signup`,
+                status: 'COMPLETED',
+              },
+            });
+            await tx.user.update({
+              where: { id: referrer.id },
+              data: {
+                balanceCents: { increment: referralBonus },
+                lifetimeCents: { increment: referralBonus },
+              },
+            });
+          }
+        }
+      }
+
+      await checkAndAwardAchievements(tx, session.user.id);
     });
   } catch (err) {
     if (err instanceof Error && err.message === 'Survey already completed') {

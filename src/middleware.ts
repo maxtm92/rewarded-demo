@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-const publicRoutes = ['/', '/login', '/api/auth', '/api/postback'];
+const publicRoutes = ['/', '/login', '/banned', '/api/auth', '/api/postback'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -30,6 +30,11 @@ export async function middleware(req: NextRequest) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Redirect banned users
+  if (token.isBanned && pathname !== '/banned') {
+    return NextResponse.redirect(new URL('/banned', req.url));
   }
 
   // Redirect to onboarding if not completed

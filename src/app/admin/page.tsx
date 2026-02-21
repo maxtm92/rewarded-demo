@@ -3,25 +3,68 @@ import { formatCurrency } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminDashboard() {
+function getPeriodDates(period: string) {
+  const now = new Date();
+  if (period === 'all') return { start: null, prevStart: null, prevEnd: null };
+
+  const days = period === 'today' ? 1 : period === '7d' ? 7 : period === '30d' ? 30 : 90;
+  const start = new Date(now);
+  start.setDate(start.getDate() - days);
+  if (period === 'today') start.setHours(0, 0, 0, 0);
+
+  const prevEnd = new Date(start);
+  const prevStart = new Date(start);
+  prevStart.setDate(prevStart.getDate() - days);
+  if (period === 'today') {
+    prevStart.setHours(0, 0, 0, 0);
+    prevEnd.setHours(0, 0, 0, 0);
+  }
+
+  return { start, prevStart, prevEnd };
+}
+
+function computeTrend(current: number, previous: number) {
+  if (previous === 0) return { pct: current > 0 ? '+100' : '0', direction: current > 0 ? 'up' as const : 'flat' as const };
+  const pct = ((current - previous) / previous * 100).toFixed(1);
+  return {
+    pct: Number(pct) >= 0 ? `+${pct}` : pct,
+    direction: Number(pct) > 0 ? 'up' as const : Number(pct) < 0 ? 'down' as const : 'flat' as const,
+  };
+}
+
+interface Props {
+  searchParams: Promise<{ period?: string }>;
+}
+
+export default async function AdminDashboard({ searchParams }: Props) {
+  const { period: periodParam } = await searchParams;
+  const period = periodParam || '30d';
+  const { start, prevStart, prevEnd } = getPeriodDates(period);
+
+  const dateWhere = start ? { createdAt: { gte: start } } : {};
+  const prevDateWhere = prevStart && prevEnd ? { createdAt: { gte: prevStart, lt: prevEnd } } : {};
+
   const [
-    totalUsers,
-    totalRevenue,
-    totalPayouts,
-    totalPostbacks,
+    totalUsers, prevUsers,
+    totalRevenue, prevRevenue,
+    totalPayouts, prevPayouts,
+    totalPostbacks, prevPostbacks,
     pendingWithdrawals,
     todaySignups,
     recentTransactions,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.postback.aggregate({ _sum: { payoutCents: true }, where: { status: 'CREDITED' } }),
-    prisma.withdrawal.aggregate({ _sum: { amountCents: true }, where: { status: 'COMPLETED' } }),
-    prisma.postback.count({ where: { status: 'CREDITED' } }),
+    prisma.user.count({ where: dateWhere }),
+    prevStart ? prisma.user.count({ where: prevDateWhere }) : Promise.resolve(0),
+    prisma.postback.aggregate({ _sum: { payoutCents: true }, where: { status: 'CREDITED', ...dateWhere } }),
+    prevStart ? prisma.postback.aggregate({ _sum: { payoutCents: true }, where: { status: 'CREDITED', ...prevDateWhere } }) : Promise.resolve({ _sum: { payoutCents: null } }),
+    prisma.withdrawal.aggregate({ _sum: { amountCents: true }, where: { status: 'COMPLETED', ...dateWhere } }),
+    prevStart ? prisma.withdrawal.aggregate({ _sum: { amountCents: true }, where: { status: 'COMPLETED', ...prevDateWhere } }) : Promise.resolve({ _sum: { amountCents: null } }),
+    prisma.postback.count({ where: { status: 'CREDITED', ...dateWhere } }),
+    prevStart ? prisma.postback.count({ where: { status: 'CREDITED', ...prevDateWhere } }) : Promise.resolve(0),
     prisma.withdrawal.count({ where: { status: 'PENDING' } }),
-    prisma.user.count({
-      where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
-    }),
+    prisma.user.count({ where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
     prisma.transaction.findMany({
+      where: dateWhere,
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: { user: { select: { email: true, name: true } } },
@@ -29,22 +72,51 @@ export default async function AdminDashboard() {
   ]);
 
   const revenue = totalRevenue._sum.payoutCents || 0;
+  const prevRevenueVal = prevRevenue._sum.payoutCents || 0;
   const payouts = totalPayouts._sum.amountCents || 0;
+  const prevPayoutsVal = prevPayouts._sum.amountCents || 0;
   const netProfit = revenue - payouts;
+  const prevNetProfit = prevRevenueVal - prevPayoutsVal;
+  const showTrend = period !== 'all';
 
   const kpis = [
-    { label: 'Total Users', value: totalUsers.toLocaleString(), icon: '👥' },
-    { label: 'Today Signups', value: todaySignups.toLocaleString(), icon: '📈' },
-    { label: 'Total Revenue', value: formatCurrency(revenue), icon: '💰', color: 'text-emerald-400' },
-    { label: 'Total Payouts', value: formatCurrency(payouts), icon: '💸', color: 'text-red-400' },
-    { label: 'Net Profit', value: formatCurrency(netProfit), icon: '📊', color: netProfit >= 0 ? 'text-emerald-400' : 'text-red-400' },
-    { label: 'Postbacks', value: totalPostbacks.toLocaleString(), icon: '🔔' },
-    { label: 'Pending Withdrawals', value: pendingWithdrawals.toLocaleString(), icon: '⏳', color: pendingWithdrawals > 0 ? 'text-amber-400' : '' },
+    { label: 'Total Users', value: totalUsers.toLocaleString(), icon: '👥', trend: showTrend ? computeTrend(totalUsers, prevUsers) : null },
+    { label: 'Today Signups', value: todaySignups.toLocaleString(), icon: '📈', trend: null },
+    { label: 'Total Revenue', value: formatCurrency(revenue), icon: '💰', color: 'text-emerald-400', trend: showTrend ? computeTrend(revenue, prevRevenueVal) : null },
+    { label: 'Total Payouts', value: formatCurrency(payouts), icon: '💸', color: 'text-red-400', trend: showTrend ? computeTrend(payouts, prevPayoutsVal) : null },
+    { label: 'Net Profit', value: formatCurrency(netProfit), icon: '📊', color: netProfit >= 0 ? 'text-emerald-400' : 'text-red-400', trend: showTrend ? computeTrend(netProfit, prevNetProfit) : null },
+    { label: 'Postbacks', value: totalPostbacks.toLocaleString(), icon: '🔔', trend: showTrend ? computeTrend(totalPostbacks, prevPostbacks) : null },
+    { label: 'Pending Withdrawals', value: pendingWithdrawals.toLocaleString(), icon: '⏳', color: pendingWithdrawals > 0 ? 'text-amber-400' : '', trend: null },
+  ];
+
+  const periods = [
+    { value: 'today', label: 'Today' },
+    { value: '7d', label: '7 Days' },
+    { value: '30d', label: '30 Days' },
+    { value: '90d', label: '90 Days' },
+    { value: 'all', label: 'All Time' },
   ];
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+
+      {/* Period Selector */}
+      <div className="flex gap-2 mb-6">
+        {periods.map((p) => (
+          <a
+            key={p.value}
+            href={`/admin?period=${p.value}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              period === p.value
+                ? 'bg-emerald-600/20 text-emerald-400'
+                : 'bg-[#2f3043] text-gray-400 hover:bg-[#42435a]'
+            }`}
+          >
+            {p.label}
+          </a>
+        ))}
+      </div>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -54,7 +126,14 @@ export default async function AdminDashboard() {
               <span>{kpi.icon}</span>
               <span className="text-gray-400 text-xs">{kpi.label}</span>
             </div>
-            <p className={`text-2xl font-bold ${kpi.color || ''}`}>{kpi.value}</p>
+            <div className="flex items-baseline gap-2">
+              <p className={`text-2xl font-bold ${kpi.color || ''}`}>{kpi.value}</p>
+              {kpi.trend && kpi.trend.direction !== 'flat' && (
+                <span className={`text-xs font-medium ${kpi.trend.direction === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {kpi.trend.direction === 'up' ? '↑' : '↓'} {kpi.trend.pct}%
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -92,6 +171,9 @@ export default async function AdminDashboard() {
                 </td>
               </tr>
             ))}
+            {recentTransactions.length === 0 && (
+              <tr><td colSpan={5} className="p-8 text-center text-gray-500">No transactions in this period</td></tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import SignOutButton from '@/components/auth/SignOutButton';
 import PageTransition from '@/components/animations/PageTransition';
+import AchievementGrid from '@/components/profile/AchievementGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,11 @@ export default async function ProfilePage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Achievement Badges */}
+      <div className="mb-6">
+        <AchievementGrid />
       </div>
 
       {/* Survey Answers */}

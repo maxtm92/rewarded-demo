@@ -72,6 +72,18 @@ model User {
   profileComplete Boolean  @default(false) @map("profile_complete")
   role            UserRole @default(USER)
   pushToken       String?  @map("push_token")
+  isBanned        Boolean  @default(false) @map("is_banned")
+
+  // Referral system
+  referralCode String? @unique @map("referral_code")
+  referredById String? @map("referred_by_id")
+  referredBy   User?   @relation("Referrals", fields: [referredById], references: [id])
+  referrals    User[]  @relation("Referrals")
+
+  // Daily login streak
+  currentStreak Int       @default(0) @map("current_streak")
+  longestStreak Int       @default(0) @map("longest_streak")
+  lastLoginDate DateTime? @map("last_login_date")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -85,6 +97,10 @@ model User {
   utmCaptures             UtmCapture[]
   withdrawals             Withdrawal[]
   premiumOfferCompletions PremiumOfferCompletion[]
+  referralEarningsAsReferrer ReferralEarning[] @relation("ReferrerEarnings")
+  referralEarningsAsReferred ReferralEarning[] @relation("ReferredEarnings")
+  achievements            UserAchievement[]
+  leaderboardEntries      LeaderboardEntry[]
 
   @@map("users")
 }
@@ -127,8 +143,16 @@ model Transaction {
 
 enum WithdrawalMethod {
   PAYPAL
-  GIFT_CARD
-  CRYPTO
+  VENMO
+  GOOGLE_PLAY
+  AMAZON
+  APPLE
+  VISA
+  BANK
+  BTC
+  LTC
+  SOL
+  DOGE
 }
 
 enum WithdrawalStatus {
@@ -143,8 +167,16 @@ model Withdrawal {
   userId      String           @map("user_id")
   amountCents Int              @map("amount_cents")
   method      WithdrawalMethod
+  destination String?
   status      WithdrawalStatus @default(PENDING)
-  note        String?
+  note             String?
+  rejectionReason  String?          @map("rejection_reason")
+
+  // Timeline tracking
+  processedAt           DateTime? @map("processed_at")
+  completedAt           DateTime? @map("completed_at")
+  rejectedAt            DateTime? @map("rejected_at")
+  estimatedCompletionAt DateTime? @map("estimated_completion_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -154,6 +186,73 @@ model Withdrawal {
   @@index([userId])
   @@index([status])
   @@map("withdrawals")
+}
+
+// ─── Referral system ────────────────────────────────────────────────
+
+model ReferralEarning {
+  id                  String   @id @default(cuid())
+  referrerId          String   @map("referrer_id")
+  referredUserId      String   @map("referred_user_id")
+  sourceTransactionId String   @unique @map("source_transaction_id")
+  amountCents         Int      @map("amount_cents")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  referrer     User @relation("ReferrerEarnings", fields: [referrerId], references: [id])
+  referredUser User @relation("ReferredEarnings", fields: [referredUserId], references: [id])
+
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@map("referral_earnings")
+}
+
+// ─── Achievements ───────────────────────────────────────────────────
+
+model Achievement {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  description String
+  icon        String @default("🏆")
+  category    String // "earning", "withdrawal", "streak", "referral", "milestone"
+  threshold   Int    @default(0)
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  users UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// ─── Leaderboard ────────────────────────────────────────────────────
+
+model LeaderboardEntry {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  period      String   // "weekly_2026-W08", "monthly_2026-02"
+  earnedCents Int      @default(0) @map("earned_cents")
+  rank        Int?
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period])
+  @@index([period, earnedCents])
+  @@map("leaderboard_entries")
 }
 
 // ─── Offerwalls & postbacks ─────────────────────────────────────────

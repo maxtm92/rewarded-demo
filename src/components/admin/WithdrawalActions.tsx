@@ -1,37 +1,100 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils';
+import ConfirmDialog from './ConfirmDialog';
 
-export default function WithdrawalActions({ id }: { id: string }) {
+interface Props {
+  id: string;
+  amountCents: number;
+  method: string;
+}
+
+export default function WithdrawalActions({ id, amountCents, method }: Props) {
   const router = useRouter();
+  const [pendingAction, setPendingAction] = useState<'COMPLETED' | 'REJECTED' | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  async function handleAction(status: 'COMPLETED' | 'REJECTED') {
-    const res = await fetch('/api/admin/withdrawals', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status }),
-    });
-    if (res.ok) {
-      toast.success(`Withdrawal ${status.toLowerCase()}`);
-      router.refresh();
+  async function handleConfirm() {
+    if (!pendingAction) return;
+    if (pendingAction === 'REJECTED' && !rejectionReason.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/withdrawals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          status: pendingAction,
+          ...(pendingAction === 'REJECTED' ? { rejectionReason: rejectionReason.trim() } : {}),
+        }),
+      });
+      if (res.ok) {
+        toast.success(`Withdrawal ${pendingAction.toLowerCase()}`);
+        router.refresh();
+      } else {
+        toast.error('Action failed');
+      }
+    } finally {
+      setLoading(false);
+      setPendingAction(null);
+      setRejectionReason('');
     }
   }
 
   return (
-    <div className="flex gap-2 justify-center">
-      <button
-        onClick={() => handleAction('COMPLETED')}
-        className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs hover:bg-emerald-500/20 transition"
+    <>
+      <div className="flex gap-2 justify-center">
+        <button
+          onClick={() => setPendingAction('COMPLETED')}
+          className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs hover:bg-emerald-500/20 transition"
+        >
+          Approve
+        </button>
+        <button
+          onClick={() => setPendingAction('REJECTED')}
+          className="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition"
+        >
+          Reject
+        </button>
+      </div>
+
+      {/* Approve Dialog */}
+      <ConfirmDialog
+        open={pendingAction === 'COMPLETED'}
+        title="Approve Withdrawal"
+        description={`Are you sure you want to approve this ${formatCurrency(amountCents)} ${method.replace('_', ' ')} withdrawal?`}
+        confirmLabel="Approve"
+        confirmVariant="success"
+        loading={loading}
+        onConfirm={handleConfirm}
+        onCancel={() => setPendingAction(null)}
+      />
+
+      {/* Reject Dialog */}
+      <ConfirmDialog
+        open={pendingAction === 'REJECTED'}
+        title="Reject Withdrawal"
+        description={`Rejecting this ${formatCurrency(amountCents)} withdrawal will refund the user's balance. Please provide a reason.`}
+        confirmLabel="Reject & Refund"
+        confirmVariant="danger"
+        loading={loading}
+        onConfirm={handleConfirm}
+        onCancel={() => { setPendingAction(null); setRejectionReason(''); }}
       >
-        Approve
-      </button>
-      <button
-        onClick={() => handleAction('REJECTED')}
-        className="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition"
-      >
-        Reject
-      </button>
-    </div>
+        <textarea
+          value={rejectionReason}
+          onChange={(e) => setRejectionReason(e.target.value)}
+          placeholder="Reason for rejection (required)..."
+          required
+          rows={3}
+          className="w-full px-3 py-2 rounded-lg bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-500 resize-none"
+        />
+      </ConfirmDialog>
+    </>
   );
 }

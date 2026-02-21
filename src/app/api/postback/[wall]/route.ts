@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { extractPostbackParams, validateSignature } from '@/lib/postback';
+import { REFERRAL_COMMISSION_RATE } from '@/lib/referral';
+import { getCurrentPeriods } from '@/lib/leaderboard';
+import { checkAndAwardAchievements } from '@/lib/achievements';
+import { sendEarningCreditedEmail } from '@/lib/email';
 
 export async function GET(
   request: NextRequest,
@@ -26,7 +30,6 @@ export async function GET(
   const isValid = validateSignature(wall, offerWall.postbackSecret, searchParams);
   if (!isValid) {
     console.error(`[Postback] Invalid signature for ${wall}, txn: ${postbackParams.externalId}`);
-    // Log rejected postback
     await prisma.postback.create({
       data: {
         offerWallId: offerWall.id,
@@ -37,7 +40,7 @@ export async function GET(
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
         rawPayload: Object.fromEntries(searchParams),
       },
-    }).catch(() => {}); // Don't fail if logging fails
+    }).catch(() => {});
     return new Response('0', { status: 403 });
   }
 
@@ -51,13 +54,13 @@ export async function GET(
     },
   });
   if (existing) {
-    // Already processed — return success (idempotent)
     return new Response('1');
   }
 
   // 5. Verify user exists
   const user = await prisma.user.findUnique({
     where: { id: postbackParams.userId },
+    select: { id: true, balanceCents: true, referredById: true, email: true, name: true },
   });
   if (!user) {
     console.error(`[Postback] User not found: ${postbackParams.userId}`);
@@ -67,7 +70,7 @@ export async function GET(
   // 6. Apply payout multiplier
   const payoutCents = Math.round(postbackParams.payoutCents * offerWall.payoutMultiplier);
 
-  // 7. Atomic credit: create postback + transaction + update balance
+  // 7. Atomic credit: postback + transaction + balance + leaderboard + achievements
   try {
     await prisma.$transaction(async (tx) => {
       const newBalance = user.balanceCents + payoutCents;
@@ -106,7 +109,74 @@ export async function GET(
           lifetimeCents: { increment: payoutCents },
         },
       });
+
+      // Leaderboard
+      const periods = getCurrentPeriods();
+      for (const period of [periods.weekly, periods.monthly]) {
+        await tx.leaderboardEntry.upsert({
+          where: { userId_period: { userId: user.id, period } },
+          create: { userId: user.id, period, earnedCents: payoutCents },
+          update: { earnedCents: { increment: payoutCents } },
+        });
+      }
+
+      // Achievements
+      await checkAndAwardAchievements(tx, user.id);
     });
+
+    // Send earning email (fire-and-forget)
+    if (user.email) {
+      sendEarningCreditedEmail(
+        user.email,
+        user.name,
+        payoutCents,
+        postbackParams.offerName || offerWall.name
+      ).catch(() => {});
+    }
+
+    // Referral bonus (separate transaction — don't block main credit)
+    if (user.referredById) {
+      try {
+        const referralBonus = Math.round(payoutCents * REFERRAL_COMMISSION_RATE);
+        if (referralBonus > 0) {
+          await prisma.$transaction(async (tx) => {
+            const referrer = await tx.user.findUnique({ where: { id: user.referredById! } });
+            if (!referrer) return;
+
+            await tx.referralEarning.create({
+              data: {
+                referrerId: referrer.id,
+                referredUserId: user.id,
+                sourceTransactionId: `${offerWall.id}_${postbackParams.externalId}`,
+                amountCents: referralBonus,
+              },
+            });
+
+            await tx.transaction.create({
+              data: {
+                userId: referrer.id,
+                type: 'BONUS',
+                amountCents: referralBonus,
+                balanceAfterCents: referrer.balanceCents + referralBonus,
+                source: 'referral',
+                description: `Referral bonus from ${offerWall.name}`,
+                status: 'COMPLETED',
+              },
+            });
+
+            await tx.user.update({
+              where: { id: referrer.id },
+              data: {
+                balanceCents: { increment: referralBonus },
+                lifetimeCents: { increment: referralBonus },
+              },
+            });
+          });
+        }
+      } catch (err) {
+        console.error('[Postback] Referral bonus failed:', err);
+      }
+    }
 
     console.log(`[Postback] Credited ${payoutCents}c to user ${user.id} from ${wall}`);
     return new Response('1');

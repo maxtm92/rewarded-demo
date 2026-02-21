@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Offer {
   id: string;
@@ -26,30 +27,79 @@ interface Angle {
   headline: string;
 }
 
+const emptyForm = {
+  slug: '', name: '', headline: '', description: '', payoutCents: '',
+  category: 'auto_insurance', externalUrl: '', icon: '🚗', angleId: '',
+};
+
 export default function PremiumOffersAdmin({ initialOffers, angles }: { initialOffers: Offer[]; angles: Angle[] }) {
   const router = useRouter();
   const [offers, setOffers] = useState(initialOffers);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({
-    slug: '', name: '', headline: '', description: '', payoutCents: '',
-    category: 'auto_insurance', externalUrl: '', icon: '🚗', angleId: '',
-  });
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await fetch('/api/admin/offers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...form,
-        payoutCents: parseInt(form.payoutCents),
-        angleId: form.angleId || null,
-      }),
+  function handleEdit(offer: Offer) {
+    setEditingId(offer.id);
+    setShowForm(true);
+    setForm({
+      slug: offer.slug,
+      name: offer.name,
+      headline: offer.headline,
+      description: offer.description,
+      payoutCents: String(offer.payoutCents),
+      category: offer.category,
+      externalUrl: offer.externalUrl,
+      icon: offer.icon,
+      angleId: offer.angleId || '',
     });
+  }
+
+  function handleCancel() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const payload = {
+      ...form,
+      payoutCents: parseInt(form.payoutCents),
+      angleId: form.angleId || null,
+    };
+
+    const res = await fetch('/api/admin/offers', {
+      method: editingId ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload),
+    });
+
     if (res.ok) {
-      toast.success('Offer created');
-      setShowAdd(false);
+      toast.success(editingId ? 'Offer updated' : 'Offer created');
+      handleCancel();
       router.refresh();
+    } else {
+      toast.error('Failed to save');
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteId) return;
+    const res = await fetch('/api/admin/offers', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: deleteId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast.success('Offer deleted');
+      setDeleteId(null);
+      router.refresh();
+    } else {
+      toast.error(data.error || 'Failed to delete');
+      setDeleteId(null);
     }
   }
 
@@ -65,14 +115,14 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
   return (
     <div>
       <button
-        onClick={() => setShowAdd(!showAdd)}
+        onClick={() => showForm ? handleCancel() : setShowForm(true)}
         className="mb-4 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm transition"
       >
-        {showAdd ? 'Cancel' : '+ Add Offer'}
+        {showForm ? 'Cancel' : '+ Add Offer'}
       </button>
 
-      {showAdd && (
-        <form onSubmit={handleAdd} className="p-6 rounded-xl bg-[#151929] border border-white/5 mb-6 grid grid-cols-2 gap-4">
+      {showForm && (
+        <form onSubmit={handleSubmit} className="p-6 rounded-xl bg-[#151929] border border-white/5 mb-6 grid grid-cols-2 gap-4">
           {(['slug', 'name', 'headline', 'description', 'payoutCents', 'category', 'externalUrl', 'icon'] as const).map((field) => (
             <div key={field} className={field === 'description' ? 'col-span-2' : ''}>
               <label className="text-xs text-gray-400 mb-1 block capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
@@ -99,7 +149,7 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
           </div>
           <div className="col-span-2">
             <button type="submit" className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm">
-              Create Offer
+              {editingId ? 'Update Offer' : 'Create Offer'}
             </button>
           </div>
         </form>
@@ -114,6 +164,7 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
               <th className="text-right p-3 text-gray-400 font-medium">Payout</th>
               <th className="text-center p-3 text-gray-400 font-medium">Completions</th>
               <th className="text-center p-3 text-gray-400 font-medium">Active</th>
+              <th className="text-center p-3 text-gray-400 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -141,11 +192,37 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
                     {offer.isActive ? 'Active' : 'Off'}
                   </button>
                 </td>
+                <td className="p-3 text-center">
+                  <div className="flex gap-1 justify-center">
+                    <button
+                      onClick={() => handleEdit(offer)}
+                      className="px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-xs hover:bg-blue-500/20 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(offer.id)}
+                      className="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete Offer"
+        description="Are you sure you want to delete this offer? This cannot be undone. If it has completions, deactivate it instead."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

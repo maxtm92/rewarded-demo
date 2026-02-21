@@ -6,13 +6,15 @@ export async function POST(request: NextRequest) {
   const id = request.nextUrl.searchParams.get('id');
   const action = request.nextUrl.searchParams.get('action');
 
-  if (!id || action !== 'click') {
+  if (!id || (action !== 'click' && action !== 'conversion')) {
     return NextResponse.json({ error: 'Invalid params' }, { status: 400 });
   }
 
   await prisma.marketingAngle.update({
     where: { id },
-    data: { clicks: { increment: 1 } },
+    data: action === 'click'
+      ? { clicks: { increment: 1 } }
+      : { conversions: { increment: 1 } },
   });
 
   return NextResponse.json({ success: true });
