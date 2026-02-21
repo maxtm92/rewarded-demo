@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import ProgressBar from '@/components/animations/ProgressBar';
 
 interface StepConfig {
@@ -83,12 +85,22 @@ const steps: StepConfig[] = [
 
 export default function SurveyPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [loading, setLoading] = useState(false);
 
+  // If onboarding is already done (stale JWT brought user here), redirect out
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.onboardingDone) {
+      router.replace('/earn');
+    }
+  }, [status, session, router]);
+
   const step = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
+
+  if (!step) return null;
 
   function selectOption(value: string) {
     if (step.type === 'single') {
@@ -129,8 +141,12 @@ export default function SurveyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(finalAnswers),
       });
-      if (res.ok) {
+      if (res.ok || res.status === 409) {
+        // 409 = already completed — still navigate forward
         router.push('/welcome');
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Something went wrong' }));
+        toast.error(data.error || 'Failed to save survey');
       }
     } finally {
       setLoading(false);
@@ -160,13 +176,13 @@ export default function SurveyPage() {
             <p className="text-[#a9a9ca]">{step.subtitle}</p>
           </div>
 
-          <div className={`grid gap-3 ${step.options.length > 4 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-4 ${step.options.length > 4 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {step.options.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => selectOption(opt.value)}
                 disabled={loading}
-                className={`flex items-center gap-3 p-4 rounded-xl border transition text-left ${
+                className={`flex items-center gap-4 p-5 rounded-[20px] border transition text-left card-shadow ${
                   isSelected(opt.value)
                     ? 'border-[#01d676] bg-[#01d676]/10 text-white'
                     : 'border-[#393e56] bg-[#1d1d2e] text-white hover:border-[#01d676]/50'
@@ -191,7 +207,7 @@ export default function SurveyPage() {
             <button
               onClick={handleMultiNext}
               disabled={loading || !((answers[step.field] as string[])?.length > 0)}
-              className="w-full mt-6 py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50"
+              className="w-full mt-6 py-4 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50 glow-green-cta"
             >
               {loading ? 'Saving...' : isLastStep ? 'Finish & Claim Bonus' : 'Continue'}
             </button>

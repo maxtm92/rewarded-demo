@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import SignOutButton from '@/components/auth/SignOutButton';
+import PageTransition from '@/components/animations/PageTransition';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,13 +28,14 @@ export default async function ProfilePage() {
   const completionPercent = Math.round((completedCount / completionItems.length) * 100);
 
   return (
+    <PageTransition>
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-white mb-6">Profile</h1>
 
       {/* User Info */}
-      <div className="p-6 rounded-2xl bg-[#1d1d2e] border border-[#393e56] mb-6">
+      <div className="p-8 rounded-[20px] bg-[#1d1d2e] border border-[#393e56] mb-6 card-inset">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 rounded-full bg-[#01d676] flex items-center justify-center text-2xl font-bold text-black">
+          <div className="w-16 h-16 rounded-full bg-[#01d676] flex items-center justify-center text-2xl font-bold text-black ring-4 ring-[#01d676]/20">
             {(user.name || user.email || '?')[0].toUpperCase()}
           </div>
           <div>
@@ -54,12 +56,12 @@ export default async function ProfilePage() {
       </div>
 
       {/* Profile Completion */}
-      <div className="p-6 rounded-2xl bg-[#1d1d2e] border border-[#393e56] mb-6">
+      <div className="p-8 rounded-[20px] bg-[#1d1d2e] border border-[#393e56] mb-6 card-inset">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-white">Profile Completion</h2>
           <span className="text-sm text-[#01d676] font-semibold">{completionPercent}%</span>
         </div>
-        <div className="h-2 bg-[#2f3043] rounded-full overflow-hidden mb-4">
+        <div className="h-3 bg-[#2f3043] rounded-full overflow-hidden mb-4">
           <div
             className="h-full bg-gradient-to-r from-[#01d676] to-[#01ff97] rounded-full transition-all"
             style={{ width: `${completionPercent}%` }}
@@ -81,7 +83,7 @@ export default async function ProfilePage() {
 
       {/* Survey Answers */}
       {user.surveyResponse && (
-        <div className="p-6 rounded-2xl bg-[#1d1d2e] border border-[#393e56] mb-6">
+        <div className="p-8 rounded-[20px] bg-[#1d1d2e] border border-[#393e56] mb-6 card-inset">
           <h2 className="font-semibold text-white mb-4">Survey Data</h2>
           <div className="space-y-2 text-sm">
             {user.surveyResponse.ageRange && (
@@ -114,5 +116,6 @@ export default async function ProfilePage() {
 
       <SignOutButton />
     </div>
+    </PageTransition>
   );
 }

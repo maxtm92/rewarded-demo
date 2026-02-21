@@ -35,11 +35,11 @@ export default function Home() {
       <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
           <span className="text-2xl">💰</span>
-          <span className="text-xl font-bold tracking-tight text-white">Rewarded</span>
+          <span className="text-xl font-bold tracking-tight text-white">Easy Task Cash</span>
         </div>
         <Link
           href="/login"
-          className="px-5 py-2.5 rounded-lg bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold text-sm transition"
+          className="px-5 py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold text-sm transition glow-green-cta"
         >
           Get Started
         </Link>
@@ -48,7 +48,7 @@ export default function Home() {
       {/* Hero */}
       <main className="max-w-7xl mx-auto px-6">
         <motion.section
-          className="py-20 text-center"
+          className="py-24 md:py-32 text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -71,7 +71,7 @@ export default function Home() {
 
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-10 py-4 text-lg font-bold rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black transition shadow-lg shadow-[#01d676]/25"
+            className="inline-flex items-center gap-2 px-10 py-5 text-lg font-bold rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black transition glow-green-cta"
           >
             Start Earning Now
             <span className="text-xl">→</span>
@@ -80,10 +80,10 @@ export default function Home() {
           <p className="text-[#787ead] text-sm mt-4">Free to join • No credit card required</p>
 
           {/* Stats */}
-          <div className="flex justify-center gap-12 mt-16">
+          <div className="flex justify-center gap-16 mt-20">
             {stats.map((s) => (
               <div key={s.label}>
-                <p className="text-3xl md:text-4xl font-extrabold text-white">{s.value}</p>
+                <p className="text-4xl md:text-5xl font-extrabold text-white">{s.value}</p>
                 <p className="text-[#787ead] text-sm mt-1">{s.label}</p>
               </div>
             ))}
@@ -96,16 +96,16 @@ export default function Home() {
           <p className="text-[#a9a9ca] text-center mb-12 max-w-xl mx-auto">
             Multiple ways to earn, one easy platform
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 + 0.3 }}
-                className="p-6 rounded-2xl bg-[#1d1d2e] border border-[#393e56] hover:border-[#01d676]/50 transition group cursor-pointer"
+                className="p-8 rounded-[20px] bg-[#1d1d2e] border border-[#393e56] hover:border-[#01d676]/50 transition group cursor-pointer card-inset hover-lift"
               >
-                <div className={`w-14 h-14 rounded-xl ${f.color} flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform`}>
+                <div className={`w-16 h-16 rounded-xl ${f.color} flex items-center justify-center text-3xl mb-5 group-hover:scale-110 transition-transform`}>
                   {f.icon}
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{f.title}</h3>
@@ -127,7 +127,7 @@ export default function Home() {
                 transition={{ delay: i * 0.15 + 0.5 }}
                 className="text-center"
               >
-                <div className="w-14 h-14 rounded-full bg-[#01d676] text-black flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                <div className="w-16 h-16 rounded-full bg-[#01d676] text-black flex items-center justify-center text-2xl font-bold mx-auto mb-4 glow-green">
                   {step.num}
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
@@ -139,7 +139,7 @@ export default function Home() {
 
         {/* Bottom CTA */}
         <section className="py-20 text-center">
-          <div className="p-12 rounded-3xl bg-[#1d1d2e] border border-[#393e56]">
+          <div className="p-12 md:p-16 rounded-3xl bg-[#1d1d2e] border border-[#393e56] card-shadow-lg">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Ready to Start <span className="text-[#01d676]">Earning</span>?
             </h2>
@@ -148,7 +148,7 @@ export default function Home() {
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 px-10 py-4 text-lg font-bold rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black transition shadow-lg shadow-[#01d676]/25"
+              className="inline-flex items-center gap-2 px-10 py-5 text-lg font-bold rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black transition glow-green-cta"
             >
               Claim Your $5 Bonus
               <span>🎁</span>
@@ -158,7 +158,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="py-8 border-t border-[#393e56] text-center text-[#787ead] text-sm">
-          <p>&copy; 2026 Rewarded. All rights reserved.</p>
+          <p>&copy; 2026 Easy Task Cash. All rights reserved.</p>
         </footer>
       </main>
     </div>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import OfferWallEmbed from '@/components/earn/OfferWallEmbed';
+import PageTransition from '@/components/animations/PageTransition';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +31,8 @@ export default async function OfferWallPage({ params }: Props) {
     : null;
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-6">
+    <PageTransition>
+      <div className="flex items-center gap-4 mb-8">
         <span className="text-3xl">{wall.icon}</span>
         <div>
           <h1 className="text-xl font-bold text-white">{wall.name}</h1>
@@ -44,6 +45,6 @@ export default async function OfferWallPage({ params }: Props) {
         iframeUrl={embedUrl}
         redirectUrl={redirectUrl}
       />
-    </div>
+    </PageTransition>
   );
 }

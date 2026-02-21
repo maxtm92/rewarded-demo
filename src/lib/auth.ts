@@ -15,7 +15,7 @@ const providers = [
     ? [Apple({ clientId: process.env.APPLE_CLIENT_ID, clientSecret: process.env.APPLE_CLIENT_SECRET })]
     : []),
   ...(process.env.RESEND_API_KEY
-    ? [Resend({ apiKey: process.env.RESEND_API_KEY, from: process.env.EMAIL_FROM || 'noreply@rewarded.com' })]
+    ? [Resend({ apiKey: process.env.RESEND_API_KEY, from: process.env.EMAIL_FROM || 'noreply@easytaskcash.com' })]
     : []),
   Credentials({
       id: 'demo',
@@ -26,10 +26,10 @@ const providers = [
       async authorize() {
         // Upsert a demo admin user for testing
         const user = await prisma.user.upsert({
-          where: { email: 'demo@rewarded.com' },
+          where: { email: 'demo@easytaskcash.com' },
           update: { role: 'ADMIN' },
           create: {
-            email: 'demo@rewarded.com',
+            email: 'demo@easytaskcash.com',
             name: 'Demo Admin',
             role: 'ADMIN',
             onboardingDone: false,

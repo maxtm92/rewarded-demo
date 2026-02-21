@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import PageTransition from '@/components/animations/PageTransition';
 
 const methods = [
   { id: 'PAYPAL', label: 'PayPal', icon: '💳', min: 500 },
@@ -51,6 +52,7 @@ export default function WithdrawPage() {
   }
 
   return (
+    <PageTransition>
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-white mb-2">Cash Out</h1>
       <p className="text-[#a9a9ca] mb-8">
@@ -67,13 +69,13 @@ export default function WithdrawPage() {
                 key={m.id}
                 type="button"
                 onClick={() => setMethod(m.id)}
-                className={`p-4 rounded-xl border text-center transition ${
+                className={`p-5 rounded-[20px] border text-center transition card-shadow ${
                   method === m.id
                     ? 'border-[#01d676] bg-[#01d676]/10'
                     : 'border-[#393e56] bg-[#1d1d2e] hover:border-[#01d676]/50'
                 }`}
               >
-                <span className="text-2xl block mb-1">{m.icon}</span>
+                <span className="text-3xl block mb-2">{m.icon}</span>
                 <span className="text-sm font-medium text-white">{m.label}</span>
                 <span className="text-xs text-[#787ead] block">Min {formatCurrency(m.min)}</span>
               </button>
@@ -94,7 +96,7 @@ export default function WithdrawPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full pl-8 pr-4 py-4 rounded-xl bg-[#2f3043] border border-[#393e56] text-white text-lg font-semibold focus:outline-none focus:border-[#01d676] transition placeholder-[#787ead]"
+              className="w-full pl-8 pr-4 py-5 rounded-[20px] bg-[#2f3043] border border-[#393e56] text-white text-lg font-semibold focus:outline-none focus:border-[#01d676] transition placeholder-[#787ead]"
             />
           </div>
           {amount && !isValid && (
@@ -117,7 +119,7 @@ export default function WithdrawPage() {
               key={val}
               type="button"
               onClick={() => setAmount(val.toFixed(2))}
-              className="flex-1 py-2 rounded-lg bg-[#2f3043] hover:bg-[#42435a] text-white text-sm font-medium transition"
+              className="flex-1 py-2.5 rounded-xl bg-[#2f3043] hover:bg-[#42435a] text-white text-sm font-medium transition"
             >
               {val === balanceCents / 100 ? 'Max' : `$${val}`}
             </button>
@@ -127,11 +129,12 @@ export default function WithdrawPage() {
         <button
           type="submit"
           disabled={!isValid || loading}
-          className="w-full py-4 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-5 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed glow-green-cta"
         >
           {loading ? 'Processing...' : `Withdraw ${amount ? formatCurrency(amountCents) : '$0.00'}`}
         </button>
       </form>
     </div>
+    </PageTransition>
   );
 }

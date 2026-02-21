@@ -11,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'Rewarded — Earn Cash for What You Already Do',
+  title: 'Easy Task Cash — Earn Cash for What You Already Do',
   description: 'Complete surveys, play games, get insurance quotes, and more. Cash out via PayPal, gift cards, or crypto.',
 };
 

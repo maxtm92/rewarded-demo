@@ -1,6 +1,6 @@
 'use client';
 
-const UTM_STORAGE_KEY = 'rewarded_utm';
+const UTM_STORAGE_KEY = 'etc_utm';
 
 export interface UtmParams {
   utm_source?: string;

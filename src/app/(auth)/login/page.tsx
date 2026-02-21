@@ -57,7 +57,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <span className="text-3xl">💰</span>
-            <span className="text-2xl font-bold text-white">Rewarded</span>
+            <span className="text-2xl font-bold text-white">Easy Task Cash</span>
           </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Create Your Account</h1>
           <p className="text-[#a9a9ca]">
@@ -66,12 +66,12 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#1d1d2e] rounded-2xl border border-[#393e56] shadow-xl p-8">
+        <div className="bg-[#1d1d2e] rounded-[20px] border border-[#393e56] p-8 md:p-10 card-inset">
           {/* Social Buttons */}
           <div className="space-y-3 mb-6">
             <button
               onClick={() => signIn('google', { callbackUrl: '/survey' })}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#2f3043] text-white font-semibold hover:bg-[#42435a] border border-[#393e56] transition"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-[#2f3043] text-white font-semibold hover:bg-[#42435a] border border-[#393e56] transition"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
             <button
               onClick={() => signIn('apple', { callbackUrl: '/survey' })}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-black text-white font-semibold border border-[#393e56] hover:bg-gray-900 transition"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-black text-white font-semibold border border-[#393e56] hover:bg-gray-900 transition"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
@@ -131,12 +131,12 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-[#2f3043] border border-[#393e56] text-white placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition"
+                  className="w-full px-4 py-3.5 rounded-xl bg-[#2f3043] border border-[#393e56] text-white placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition"
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50"
+                  className="w-full py-3.5 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50 glow-green-cta"
                 >
                   {loading ? 'Sending link...' : 'Send Magic Link'}
                 </button>
@@ -158,7 +158,7 @@ export default function LoginPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 (555) 123-4567"
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-[#2f3043] border border-[#393e56] text-white placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition"
+                  className="w-full px-4 py-3.5 rounded-xl bg-[#2f3043] border border-[#393e56] text-white placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition"
                 />
                 {codeSent && (
                   <input
@@ -168,7 +168,7 @@ export default function LoginPage() {
                     placeholder="Enter 6-digit code"
                     maxLength={6}
                     required
-                    className="w-full px-4 py-3 rounded-xl bg-[#2f3043] border border-[#393e56] text-white placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition text-center tracking-widest text-lg"
+                    className="w-full px-4 py-3.5 rounded-xl bg-[#2f3043] border border-[#393e56] text-white placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition text-center tracking-widest text-lg"
                   />
                 )}
                 {!codeSent ? (
@@ -176,7 +176,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleSendCode}
                     disabled={loading || !phone}
-                    className="w-full py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50"
+                    className="w-full py-3.5 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50 glow-green-cta"
                   >
                     {loading ? 'Sending...' : 'Send Code'}
                   </button>
@@ -184,7 +184,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading || code.length < 6}
-                    className="w-full py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50"
+                    className="w-full py-3.5 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold transition disabled:opacity-50 glow-green-cta"
                   >
                     {loading ? 'Verifying...' : 'Verify & Sign In'}
                   </button>
@@ -220,7 +220,7 @@ export default function LoginPage() {
             }
           }}
           disabled={loading}
-          className="w-full mt-4 py-3 rounded-xl border border-dashed border-[#fac401]/50 text-[#fac401] text-sm font-medium hover:bg-[#fac401]/10 transition disabled:opacity-50"
+          className="w-full mt-4 py-3.5 rounded-xl border border-dashed border-[#fac401]/50 text-[#fac401] text-sm font-medium hover:bg-[#fac401]/10 transition disabled:opacity-50"
         >
           {loading ? 'Signing in...' : 'Skip Sign Up (Demo Admin)'}
         </button>

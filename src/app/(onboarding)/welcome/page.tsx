@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import CoinDrop from '@/components/animations/CoinDrop';
 import ConfettiBurst from '@/components/animations/ConfettiBurst';
@@ -9,16 +10,25 @@ import CountUp from '@/components/animations/CountUp';
 
 export default function WelcomePage() {
   const router = useRouter();
+  const { update } = useSession();
   const [showAnimations, setShowAnimations] = useState(false);
 
   useEffect(() => {
     // Trigger animations after mount
-    const timer = setTimeout(() => setShowAnimations(true), 200);
-    return () => clearTimeout(timer);
-  }, []);
+    const animTimer = setTimeout(() => setShowAnimations(true), 200);
+    // Refresh the JWT so onboardingDone is up to date, then auto-redirect
+    let redirectTimer: NodeJS.Timeout;
+    update().finally(() => {
+      redirectTimer = setTimeout(() => router.push('/earn'), 3500);
+    });
+    return () => {
+      clearTimeout(animTimer);
+      clearTimeout(redirectTimer!);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="text-center py-12">
+    <div className="text-center py-16">
       {showAnimations && (
         <>
           <CoinDrop count={15} />
@@ -64,7 +74,7 @@ export default function WelcomePage() {
       >
         <button
           onClick={() => router.push('/earn')}
-          className="w-full py-4 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-bold text-lg transition shadow-lg shadow-[#01d676]/25"
+          className="w-full py-5 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-bold text-lg transition glow-green-cta"
         >
           Start Earning Now →
         </button>
