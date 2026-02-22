@@ -170,14 +170,14 @@ export default function WithdrawPage() {
           {method.label}
         </span>
 
-        <div className={`relative w-full aspect-[4/5] rounded-2xl bg-gradient-to-br ${method.color} flex items-center justify-center border-2 overflow-hidden ${
+        <div className={`relative w-full aspect-[5/4] rounded-2xl bg-gradient-to-br ${method.color} flex items-center justify-center border-2 overflow-hidden ${
           isActive ? 'border-[#01d676]' : 'border-transparent hover:border-[#393e56]'
         }`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={method.logo}
             alt={method.label}
-            className="w-10 h-10 md:w-12 md:h-12 drop-shadow-lg"
+            className="w-8 h-8 md:w-10 md:h-10 drop-shadow-lg"
           />
           {showBonus && (
             <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-[#01d676] text-black text-[9px] font-bold leading-tight">

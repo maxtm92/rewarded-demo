@@ -7,6 +7,8 @@ import PageTransition from '@/components/animations/PageTransition';
 import { StaggerList, StaggerItem } from '@/components/animations/StaggerList';
 import WithdrawalTimeline from '@/components/dashboard/WithdrawalTimeline';
 import TransactionFilter from '@/components/dashboard/TransactionFilter';
+import BalanceHeroClient from '@/components/dashboard/BalanceHeroClient';
+import StreakBanner from '@/components/earn/StreakBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,53 +78,30 @@ export default async function DashboardPage() {
 
   return (
     <PageTransition>
-      <h1 className="text-2xl font-bold text-white mb-6">Dashboard</h1>
+      {/* 1. Balance Hero with animated numbers */}
+      <BalanceHeroClient
+        balanceCents={user.balanceCents}
+        todayCents={todayCents}
+        weekCents={weekCents}
+        lifetimeCents={user.lifetimeCents}
+        userName={user.name}
+      />
 
-      {/* Balance Hero Card */}
-      <div className="p-8 rounded-2xl bg-gradient-to-br from-[#01d676]/20 via-[#0a2e1f] to-[#1d1d2e] border border-[#01d676]/20 relative overflow-hidden mb-6">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#01d676]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#01d676]/5 rounded-full blur-2xl" />
-
-        {/* Today's earnings badge */}
-        {todayCents > 0 && (
-          <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-[#01d676]/15 border border-[#01d676]/30 text-[#01d676] text-xs font-semibold">
-            Today: +{formatCurrency(todayCents)}
-          </div>
-        )}
-
-        <p className="text-[#01d676]/70 text-sm font-medium mb-1 relative">Available Balance</p>
-        <p className="text-5xl font-extrabold text-white relative mb-5">
-          {formatCurrency(user.balanceCents)}
-        </p>
-        <div className="flex gap-3 relative">
-          <Link
-            href="/withdraw"
-            className="px-6 py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold text-sm transition glow-green-cta btn-hover"
-          >
-            Cash Out
-          </Link>
-          <Link
-            href="/earn"
-            className="px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold text-sm hover:bg-white/15 transition btn-hover"
-          >
-            Earn More
-          </Link>
-        </div>
+      {/* 2. Streak Section */}
+      <div className="mb-6">
+        <StreakBanner />
       </div>
 
-      {/* Quick Stats Strip — 4 cards */}
+      {/* 3. Stats Strip — 4 cards */}
       <StaggerList className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StaggerItem>
-          <Link href="/earn" className="block p-4 rounded-2xl bg-[#1d1d2e] border border-[#393e56] card-inset hover:border-[#01d676]/30 transition group">
+          <div className="p-4 rounded-2xl bg-[#1d1d2e] border border-[#393e56] card-inset">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-base">🔥</span>
-              <p className="text-[#787ead] text-xs">Streak</p>
+              <span className="text-base">💰</span>
+              <p className="text-[#787ead] text-xs">Today</p>
             </div>
-            <p className="text-xl font-extrabold text-white">
-              {user.currentStreak > 0 ? `${user.currentStreak} Day${user.currentStreak > 1 ? 's' : ''}` : '—'}
-            </p>
-            {user.currentStreak === 0 && <p className="text-[#787ead] text-[10px]">Start a streak!</p>}
-          </Link>
+            <p className="text-xl font-extrabold text-[#01d676]">{formatCurrency(todayCents)}</p>
+          </div>
         </StaggerItem>
         <StaggerItem>
           <div className="p-4 rounded-2xl bg-[#1d1d2e] border border-[#393e56] card-inset">
@@ -153,7 +132,7 @@ export default async function DashboardPage() {
         </StaggerItem>
       </StaggerList>
 
-      {/* Quick Actions */}
+      {/* 4. Quick Actions */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {quickActions.map(a => (
           <Link
@@ -168,12 +147,12 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* Withdrawal Timeline */}
+      {/* 5. Withdrawal Timeline */}
       <div className="mb-8">
         <WithdrawalTimeline />
       </div>
 
-      {/* Recent Activity — client component with filters */}
+      {/* 6. Recent Activity */}
       <TransactionFilter transactions={serializedTx} />
     </PageTransition>
   );
