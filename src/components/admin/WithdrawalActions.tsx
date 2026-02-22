@@ -51,13 +51,13 @@ export default function WithdrawalActions({ id, amountCents, method }: Props) {
       <div className="flex gap-2 justify-center">
         <button
           onClick={() => setPendingAction('COMPLETED')}
-          className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs hover:bg-emerald-500/20 transition"
+          className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs hover:bg-emerald-100 transition"
         >
           Approve
         </button>
         <button
           onClick={() => setPendingAction('REJECTED')}
-          className="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition"
+          className="px-2 py-1 rounded bg-red-50 text-red-700 text-xs hover:bg-red-100 transition"
         >
           Reject
         </button>
@@ -92,7 +92,7 @@ export default function WithdrawalActions({ id, amountCents, method }: Props) {
           placeholder="Reason for rejection (required)..."
           required
           rows={3}
-          className="w-full px-3 py-2 rounded-lg bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-500 resize-none"
+          className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
         />
       </ConfirmDialog>
     </>

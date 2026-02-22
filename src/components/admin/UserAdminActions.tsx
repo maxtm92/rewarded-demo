@@ -68,14 +68,12 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
 
     const cents = Math.round(parseFloat(amount) * 100);
 
-    // Debit validation
     if (adjustType === 'debit' && cents > currentBalanceCents) {
       setAdjustError(`Cannot debit more than current balance ($${(currentBalanceCents / 100).toFixed(2)})`);
       return;
     }
     setAdjustError('');
 
-    // Large adjustment warning
     if (cents > 5000) {
       setShowAdjustWarning(true);
       return;
@@ -86,20 +84,20 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">Admin Actions</h2>
+      <h2 className="text-lg font-semibold text-gray-900">Admin Actions</h2>
 
       {message && (
-        <div className="px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm">
+        <div className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm">
           {message}
         </div>
       )}
 
       {/* Ban / Unban */}
-      <div className="p-4 rounded-xl bg-[#151929] border border-white/5">
+      <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-sm">Account Status</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="font-medium text-sm text-gray-900">Account Status</p>
+            <p className="text-xs text-gray-500 mt-1">
               {isBanned ? 'This user is currently banned' : 'This user is active'}
             </p>
           </div>
@@ -108,8 +106,8 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
             disabled={loading}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 ${
               isBanned
-                ? 'bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20'
-                : 'bg-red-600/10 text-red-400 hover:bg-red-600/20'
+                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                : 'bg-red-50 text-red-700 hover:bg-red-100'
             }`}
           >
             {isBanned ? 'Unban User' : 'Ban User'}
@@ -118,9 +116,9 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
       </div>
 
       {/* Balance Adjustment */}
-      <form onSubmit={handleAdjust} className="p-4 rounded-xl bg-[#151929] border border-white/5 space-y-4">
-        <p className="font-medium text-sm">Balance Adjustment</p>
-        <p className="text-xs text-gray-400">
+      <form onSubmit={handleAdjust} className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm space-y-4">
+        <p className="font-medium text-sm text-gray-900">Balance Adjustment</p>
+        <p className="text-xs text-gray-500">
           Current balance: ${(currentBalanceCents / 100).toFixed(2)}
         </p>
 
@@ -129,7 +127,7 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
             type="button"
             onClick={() => { setAdjustType('credit'); setAdjustError(''); }}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-              adjustType === 'credit' ? 'bg-emerald-600/20 text-emerald-400' : 'bg-[#2f3043] text-gray-400'
+              adjustType === 'credit' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-100 text-gray-500'
             }`}
           >
             + Credit
@@ -138,7 +136,7 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
             type="button"
             onClick={() => { setAdjustType('debit'); setAdjustError(''); }}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-              adjustType === 'debit' ? 'bg-red-600/20 text-red-400' : 'bg-[#2f3043] text-gray-400'
+              adjustType === 'debit' ? 'bg-red-50 text-red-700 ring-1 ring-red-200' : 'bg-gray-100 text-gray-500'
             }`}
           >
             - Debit
@@ -152,22 +150,22 @@ export default function UserAdminActions({ userId, isBanned, currentBalanceCents
           value={amount}
           onChange={(e) => { setAmount(e.target.value); setAdjustError(''); }}
           placeholder="Amount in dollars (e.g. 5.00)"
-          className="w-full px-4 py-2.5 rounded-lg bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+          className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-        {adjustError && <p className="text-red-400 text-xs -mt-2">{adjustError}</p>}
+        {adjustError && <p className="text-red-600 text-xs -mt-2">{adjustError}</p>}
 
         <input
           type="text"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason (required)"
-          className="w-full px-4 py-2.5 rounded-lg bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+          className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
 
         <button
           type="submit"
           disabled={loading || !amount || !reason}
-          className="w-full py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition disabled:opacity-50"
+          className="w-full py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50"
         >
           {loading ? 'Processing...' : `${adjustType === 'credit' ? 'Credit' : 'Debit'} $${amount || '0.00'}`}
         </button>

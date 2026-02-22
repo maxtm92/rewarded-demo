@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import AnimatedBalance from '@/components/animations/AnimatedBalance';
+import StreakBanner from '@/components/earn/StreakBanner';
 
 /* ── Inline SVG Icons ──────────────────────────── */
 
@@ -77,14 +78,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen pb-24 md:pb-8">
       {/* ── Header ── */}
       <header className="sticky top-0 z-40 bg-[#1d1e30]/95 backdrop-blur-xl border-b border-[#393e56]">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           {/* Logo */}
           <Link href="/earn" className="flex items-center gap-2.5 flex-shrink-0">
             <span className="px-2 h-8 bg-[#01d676] rounded-lg flex items-center justify-center text-black font-bold text-xs">ETC</span>
             <span className="font-bold text-white text-lg hidden sm:inline">Easy Task Cash</span>
           </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav + Engagement */}
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -104,25 +105,59 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {/* Divider */}
+            <div className="w-px h-5 bg-[#393e56] mx-2" />
+            {/* Streak */}
+            <StreakBanner variant="header" />
+            {/* Invite */}
+            <Link
+              href="/referral"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-[#01d676] hover:bg-[#01d676]/10 transition"
+            >
+              <span>🤝</span> Invite
+            </Link>
           </nav>
 
-          {/* Right: Balance + Avatar */}
-          {session?.user && (
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="balance-badge rounded-full px-3 py-1.5 flex items-center gap-1.5">
-                <span className="text-[#01d676] font-semibold text-sm">$</span>
-                <span className="text-white font-semibold text-sm">
-                  <AnimatedBalance value={session.user.balanceCents} />
-                </span>
-              </div>
-              <Link
-                href="/profile"
-                className="w-9 h-9 rounded-full bg-[#2f3043] border border-[#393e56] flex items-center justify-center text-sm font-medium text-white hover:border-[#01d676]/50 transition"
-              >
-                {(session.user.name || session.user.email || '?')[0].toUpperCase()}
-              </Link>
-            </div>
-          )}
+          {/* Right: Balance + Avatar (+ mobile streak/invite) */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            {session?.user ? (
+              <>
+                {/* Mobile-only streak + invite */}
+                <div className="flex md:hidden items-center gap-2">
+                  <StreakBanner variant="header" />
+                  <Link
+                    href="/referral"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#01d676]/10 text-sm hover:bg-[#01d676]/20 transition"
+                  >
+                    🤝
+                  </Link>
+                </div>
+                {/* Balance */}
+                <div className="balance-badge rounded-full px-3 py-1.5 flex items-center gap-1.5">
+                  <span className="text-[#01d676] font-semibold text-sm">$</span>
+                  <span className="text-white font-semibold text-sm">
+                    <AnimatedBalance value={session.user.balanceCents} />
+                  </span>
+                </div>
+                {/* Avatar */}
+                <Link
+                  href="/profile"
+                  className="w-9 h-9 rounded-full bg-[#2f3043] border border-[#393e56] flex items-center justify-center text-sm font-medium text-white hover:border-[#01d676]/50 transition"
+                >
+                  {(session.user.name || session.user.email || '?')[0].toUpperCase()}
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* Placeholder to prevent layout shift */}
+                <div className="balance-badge rounded-full px-3 py-1.5 flex items-center gap-1.5 opacity-0">
+                  <span className="text-sm">$</span>
+                  <span className="text-sm">0.00</span>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-[#2f3043]" />
+              </>
+            )}
+          </div>
         </div>
       </header>
 

@@ -82,11 +82,11 @@ export default async function AdminDashboard({ searchParams }: Props) {
   const kpis = [
     { label: 'Total Users', value: totalUsers.toLocaleString(), icon: '👥', trend: showTrend ? computeTrend(totalUsers, prevUsers) : null },
     { label: 'Today Signups', value: todaySignups.toLocaleString(), icon: '📈', trend: null },
-    { label: 'Total Revenue', value: formatCurrency(revenue), icon: '💰', color: 'text-emerald-400', trend: showTrend ? computeTrend(revenue, prevRevenueVal) : null },
-    { label: 'Total Payouts', value: formatCurrency(payouts), icon: '💸', color: 'text-red-400', trend: showTrend ? computeTrend(payouts, prevPayoutsVal) : null },
-    { label: 'Net Profit', value: formatCurrency(netProfit), icon: '📊', color: netProfit >= 0 ? 'text-emerald-400' : 'text-red-400', trend: showTrend ? computeTrend(netProfit, prevNetProfit) : null },
+    { label: 'Total Revenue', value: formatCurrency(revenue), icon: '💰', color: 'text-emerald-600', trend: showTrend ? computeTrend(revenue, prevRevenueVal) : null },
+    { label: 'Total Payouts', value: formatCurrency(payouts), icon: '💸', color: 'text-red-600', trend: showTrend ? computeTrend(payouts, prevPayoutsVal) : null },
+    { label: 'Net Profit', value: formatCurrency(netProfit), icon: '📊', color: netProfit >= 0 ? 'text-emerald-600' : 'text-red-600', trend: showTrend ? computeTrend(netProfit, prevNetProfit) : null },
     { label: 'Postbacks', value: totalPostbacks.toLocaleString(), icon: '🔔', trend: showTrend ? computeTrend(totalPostbacks, prevPostbacks) : null },
-    { label: 'Pending Withdrawals', value: pendingWithdrawals.toLocaleString(), icon: '⏳', color: pendingWithdrawals > 0 ? 'text-amber-400' : '', trend: null },
+    { label: 'Pending Withdrawals', value: pendingWithdrawals.toLocaleString(), icon: '⏳', color: pendingWithdrawals > 0 ? 'text-amber-600' : '', trend: null },
   ];
 
   const periods = [
@@ -99,7 +99,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
       {/* Period Selector */}
       <div className="flex gap-2 mb-6">
@@ -109,8 +109,8 @@ export default async function AdminDashboard({ searchParams }: Props) {
             href={`/admin?period=${p.value}`}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
               period === p.value
-                ? 'bg-emerald-600/20 text-emerald-400'
-                : 'bg-[#2f3043] text-gray-400 hover:bg-[#42435a]'
+                ? 'bg-gray-900 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             {p.label}
@@ -121,15 +121,15 @@ export default async function AdminDashboard({ searchParams }: Props) {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="p-4 rounded-xl bg-[#151929] border border-white/5">
+          <div key={kpi.label} className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span>{kpi.icon}</span>
-              <span className="text-gray-400 text-xs">{kpi.label}</span>
+              <span className="text-sm">{kpi.icon}</span>
+              <span className="text-gray-500 text-xs">{kpi.label}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <p className={`text-2xl font-bold ${kpi.color || ''}`}>{kpi.value}</p>
+              <p className={`text-2xl font-bold ${kpi.color || 'text-gray-900'}`}>{kpi.value}</p>
               {kpi.trend && kpi.trend.direction !== 'flat' && (
-                <span className={`text-xs font-medium ${kpi.trend.direction === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span className={`text-xs font-medium ${kpi.trend.direction === 'up' ? 'text-emerald-600' : 'text-red-600'}`}>
                   {kpi.trend.direction === 'up' ? '↑' : '↓'} {kpi.trend.pct}%
                 </span>
               )}
@@ -139,40 +139,41 @@ export default async function AdminDashboard({ searchParams }: Props) {
       </div>
 
       {/* Recent Transactions */}
-      <h2 className="text-lg font-semibold mb-4">Recent Transactions</h2>
-      <div className="rounded-xl bg-[#151929] border border-white/5 overflow-hidden">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+      <div className="rounded-lg bg-white border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/5">
-              <th className="text-left p-3 text-gray-400 font-medium">User</th>
-              <th className="text-left p-3 text-gray-400 font-medium">Type</th>
-              <th className="text-left p-3 text-gray-400 font-medium">Source</th>
-              <th className="text-right p-3 text-gray-400 font-medium">Amount</th>
-              <th className="text-right p-3 text-gray-400 font-medium">Date</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">User</th>
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Type</th>
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Source</th>
+              <th className="text-right p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Amount</th>
+              <th className="text-right p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Date</th>
             </tr>
           </thead>
           <tbody>
             {recentTransactions.map((tx) => (
-              <tr key={tx.id} className="border-b border-white/5 last:border-0">
-                <td className="p-3">{tx.user.name || tx.user.email || tx.userId.slice(0, 8)}</td>
+              <tr key={tx.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                <td className="p-3 text-gray-900">{tx.user.name || tx.user.email || tx.userId.slice(0, 8)}</td>
                 <td className="p-3">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    tx.type === 'EARNING' ? 'bg-emerald-500/10 text-emerald-400' :
-                    tx.type === 'BONUS' ? 'bg-amber-500/10 text-amber-400' :
-                    'bg-red-500/10 text-red-400'
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    tx.type === 'EARNING' ? 'bg-emerald-50 text-emerald-700' :
+                    tx.type === 'BONUS' ? 'bg-amber-50 text-amber-700' :
+                    tx.type === 'ADJUSTMENT' ? 'bg-blue-50 text-blue-700' :
+                    'bg-red-50 text-red-700'
                   }`}>
                     {tx.type}
                   </span>
                 </td>
-                <td className="p-3 text-gray-400">{tx.source}</td>
-                <td className="p-3 text-right font-medium">{formatCurrency(tx.amountCents)}</td>
-                <td className="p-3 text-right text-gray-400">
+                <td className="p-3 text-gray-500">{tx.source}</td>
+                <td className="p-3 text-right font-medium text-gray-900">{formatCurrency(tx.amountCents)}</td>
+                <td className="p-3 text-right text-gray-500">
                   {new Date(tx.createdAt).toLocaleDateString()}
                 </td>
               </tr>
             ))}
             {recentTransactions.length === 0 && (
-              <tr><td colSpan={5} className="p-8 text-center text-gray-500">No transactions in this period</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-gray-400">No transactions in this period</td></tr>
             )}
           </tbody>
         </table>

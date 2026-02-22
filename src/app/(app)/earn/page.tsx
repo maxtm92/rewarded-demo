@@ -4,22 +4,13 @@ import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import PageTransition from '@/components/animations/PageTransition';
 import { StaggerList, StaggerItem } from '@/components/animations/StaggerList';
-import StreakBanner from '@/components/earn/StreakBanner';
 import ActivityFeed from '@/components/earn/ActivityFeed';
-import ReferralBanner from '@/components/earn/ReferralBanner';
 import LeaderboardPreview from '@/components/earn/LeaderboardPreview';
+import FeaturedWallCard from '@/components/earn/cards/FeaturedWallCard';
+import WallCard from '@/components/earn/cards/WallCard';
+import OfferCard from '@/components/earn/cards/OfferCard';
 
 export const dynamic = 'force-dynamic';
-
-/* ── Offerwall config (bonus amounts + categories) ── */
-const wallConfig: Record<string, { bonus: string; detail: string; section: 'games' | 'surveys' }> = {
-  freecash:       { bonus: '$10', detail: 'Must complete one game to claim', section: 'games' },
-  playful:        { bonus: '$5',  detail: 'Must complete one game to claim', section: 'games' },
-  tester:         { bonus: '$5',  detail: 'Must complete one game to claim', section: 'games' },
-  'fluent-surveys': { bonus: '$5', detail: 'Complete an offer to claim', section: 'surveys' },
-};
-
-const defaultConfig = { bonus: '$5', detail: 'Complete an offer to claim', section: 'games' as const };
 
 export default async function EarnPage() {
   const session = await auth();
@@ -45,48 +36,101 @@ export default async function EarnPage() {
   const isUnlocked = lifetimeCents >= ADVANCED_THRESHOLD;
   const progressPct = Math.min(Math.round((lifetimeCents / ADVANCED_THRESHOLD) * 100), 100);
 
-  const allGameWalls = walls.filter(w => (wallConfig[w.slug] || defaultConfig).section === 'games');
-  const featuredWall = allGameWalls.find(w => w.slug === 'freecash');
-  const gameWalls = allGameWalls.filter(w => w.slug !== 'freecash');
-  const surveyWalls = walls.filter(w => (wallConfig[w.slug] || defaultConfig).section === 'surveys');
+  // Use DB fields for section/featured instead of hardcoded config
+  const allGameWalls = walls.filter(w => (w.section || 'games') === 'games');
+  const featuredWall = walls.find(w => w.isFeatured) || null;
+  const gameWalls = allGameWalls.filter(w => !w.isFeatured);
+  const surveyWalls = walls.filter(w => (w.section || 'games') === 'surveys');
   const insuranceOffers = premiumOffers.filter(o => o.category === 'auto_insurance');
   const saveOffers = premiumOffers.filter(o => o.category !== 'auto_insurance');
 
   const totalItems = walls.length + premiumOffers.length;
 
+  // Top 3 items for hero preview strip
+  const previewItems = [
+    ...walls.map(w => ({
+      name: w.name,
+      icon: w.icon,
+      logoUrl: w.logoUrl,
+      description: w.bonusDetail || 'Complete offers to earn',
+      payout: w.bonusText || '$5',
+      payoutCents: parseInt((w.bonusText || '$5').replace(/[$,]/g, '')) * 100 || 0,
+      href: `/earn/${w.slug}`,
+    })),
+    ...premiumOffers.map(o => ({
+      name: o.name,
+      icon: o.icon,
+      logoUrl: null as string | null,
+      description: o.headline || o.description,
+      payout: formatCurrency(o.payoutCents),
+      payoutCents: o.payoutCents,
+      href: `/offers/${o.slug}`,
+    })),
+  ]
+    .sort((a, b) => b.payoutCents - a.payoutCents)
+    .slice(0, 3);
+
   return (
     <PageTransition>
       {/* ═══════════════════════════════════════════════ */}
-      {/* ── Hero Banner ── */}
+      {/* ── Hero Banner (Compact) ── */}
       {/* ═══════════════════════════════════════════════ */}
       <div className="earn-hero relative rounded-[20px] overflow-hidden mb-8">
         <div className="absolute inset-0 opacity-[0.07]" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2301d676' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
-        <div className="relative z-10 p-8 md:p-12 text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
-            <span className="text-[#01d676] text-glow-green">Get paid</span> for testing apps,
-            <br className="hidden lg:block" />
-            {' '}games & surveys
+        <div className="relative z-10 p-6 md:p-8 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 leading-tight">
+            Earn up to <span className="text-[#01d676] text-glow-green">$32/day</span> testing apps, games & surveys
           </h1>
 
-          {/* Inline stat pills */}
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2f3043]/80 border border-[#393e56] text-sm">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2f3043]/80 border border-[#393e56] text-sm">
               <span className="text-base">🚀</span>
-              <span className="text-white font-bold">17m</span>
-              <span className="text-[#787ead]">avg first reward</span>
+              <span className="text-white font-bold">17 min</span>
+              <span className="text-[#787ead]">first reward</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2f3043]/80 border border-[#393e56] text-sm">
-              <span className="text-base">🔥</span>
-              <span className="text-white font-bold">$32</span>
-              <span className="text-[#787ead]">avg earned/day</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2f3043]/80 border border-[#393e56] text-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2f3043]/80 border border-[#393e56] text-sm">
               <span className="text-[#01d676] font-bold">$500K+</span>
               <span className="text-[#787ead]">paid out</span>
             </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2f3043]/80 border border-[#393e56] text-sm">
+              <span className="text-[#fac401] font-bold">50K+</span>
+              <span className="text-[#787ead]">users</span>
+            </span>
           </div>
+
+          {/* Offer preview strip */}
+          {previewItems.length > 0 && (
+            <div className="flex gap-3 mt-1 mb-5 overflow-x-auto pb-1 scrollbar-hide md:overflow-visible">
+              {previewItems.map((item, i) => (
+                <Link
+                  key={i}
+                  href={item.href}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-[#141523]/60 border border-[#393e56]/50 hover:border-[#01d676]/30 transition-all flex-1 min-w-[200px] group"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-[#2f3043] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    {item.logoUrl ? (
+                      <img src={item.logoUrl} alt={item.name} className="w-8 h-8 object-contain rounded-lg" />
+                    ) : (
+                      <span className="text-xl">{item.icon}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">{item.name}</p>
+                    <p className="text-[#787ead] text-xs truncate">{item.description}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-white font-bold text-base">{item.payout}</p>
+                    <div className="flex items-center gap-0.5 justify-end">
+                      <svg className="w-3 h-3 text-[#fac401]" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                      <span className="text-[#787ead] text-xs">5.0</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
             <a
@@ -99,26 +143,23 @@ export default async function EarnPage() {
               <span className="text-[#01d676] font-bold">{totalItems}</span> ways to earn now
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* ═══════════════════════════════════════════════ */}
-      {/* ── Engagement Strip ── */}
-      {/* ═══════════════════════════════════════════════ */}
-      <div className="space-y-2 mb-10 md:mb-14">
-        {/* Streak + Referral row */}
-        <div className="rounded-2xl bg-[#1d1d2e] border border-[#393e56] px-4 py-3 card-inset">
-          <div className="flex items-center justify-between gap-3">
-            <StreakBanner compact />
-            <div className="hidden md:block border-l border-[#393e56] h-6 mx-1" />
-            <div className="hidden md:block">
-              <ReferralBanner inline />
+          {/* Trust badge */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-5">
+            <div className="flex items-center gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className="w-4 h-4 text-[#fac401]" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+              ))}
             </div>
+            <span className="text-[#a9a9ca] text-sm">
+              Trusted by <span className="text-white font-semibold">50,000+</span> users
+            </span>
+            <span className="text-[#393e56]">&middot;</span>
+            <span className="text-[#a9a9ca] text-sm">
+              <span className="text-[#01d676] font-semibold">$500K+</span> paid out
+            </span>
           </div>
         </div>
-
-        {/* Activity feed */}
-        <ActivityFeed />
       </div>
 
       {/* ═══════════════════════════════════════════════ */}
@@ -140,110 +181,36 @@ export default async function EarnPage() {
             </div>
           </div>
 
-          {/* Featured: Freecash */}
-          {featuredWall && (() => {
-            const config = wallConfig[featuredWall.slug] || defaultConfig;
-            return (
-              <Link
-                href={`/earn/${featuredWall.slug}`}
-                className="earn-card block rounded-[20px] bg-[#1d1d2e] border border-[#01d676]/30 overflow-hidden transition-all duration-300 group shadow-[0_0_30px_rgba(1,214,118,0.12)] hover:shadow-[0_0_50px_rgba(1,214,118,0.25)] hover:border-[#01d676]/60 mb-5"
-              >
-                <div className="flex flex-col md:flex-row">
-                  <div className="relative md:w-64 h-44 md:h-auto bg-gradient-to-br from-[#01d676]/30 via-[#0a2e1f] to-[#141523] flex-shrink-0">
-                    <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/5" />
-                    <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full bg-white/5" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {featuredWall.logoUrl ? (
-                        <div className="w-24 h-24 rounded-2xl bg-[#1d1d2e]/60 backdrop-blur-md border border-white/10 flex items-center justify-center p-2 group-hover:scale-110 transition-transform duration-500">
-                          <img src={featuredWall.logoUrl} alt={featuredWall.name} className="w-full h-full object-contain rounded-xl" />
-                        </div>
-                      ) : (
-                        <div className="w-24 h-24 rounded-2xl bg-[#1d1d2e]/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-500">
-                          {featuredWall.icon}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className="px-2.5 py-0.5 rounded-md bg-[#01d676]/20 text-[#01d676] text-[11px] font-bold uppercase tracking-wider">
-                        Most Popular
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-md bg-[#fac401]/15 text-[#fac401] text-[11px] font-bold uppercase tracking-wider">
-                        Featured
-                      </span>
-                      <span className="relative flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/15 text-red-400 text-[11px] font-bold uppercase tracking-wider">
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-400" />
-                        </span>
-                        LIVE
-                      </span>
-                    </div>
-
-                    <h3 className="text-2xl font-extrabold text-white mb-2 group-hover:text-[#01d676] transition-colors">
-                      {featuredWall.name}
-                    </h3>
-
-                    <p className="text-[#a9a9ca] text-sm mb-1">
-                      Earn <span className="text-white font-bold">$5 — $2,500</span> per offer — get <span className="text-[#01d676] font-bold">{config.bonus} bonus</span> from Easy Task Cash
-                    </p>
-                    <p className="text-[#787ead] text-xs mb-5">250+ offers available · {config.detail}</p>
-
-                    <div className="flex items-center gap-4">
-                      <div className="px-8 py-3 rounded-xl bg-[#01d676] text-black font-bold text-sm text-center transition-all group-hover:bg-[#01ff97] glow-green-cta btn-hover">
-                        Download & Earn {config.bonus} →
-                      </div>
-                      <div className="flex items-center gap-1 text-[#fac401] text-sm">
-                        <span>★★★★★</span>
-                        <span className="text-[#787ead] text-xs ml-1">4.8</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })()}
+          {/* Featured Wall */}
+          {featuredWall && (featuredWall.section || 'games') === 'games' && (
+            <div className="mb-5">
+              <FeaturedWallCard
+                name={featuredWall.name}
+                icon={featuredWall.icon}
+                logoUrl={featuredWall.logoUrl}
+                bonusText={featuredWall.bonusText}
+                bonusDetail={featuredWall.bonusDetail}
+                slug={featuredWall.slug}
+              />
+            </div>
+          )}
 
           {/* Other game offerwalls — horizontal compact cards */}
           {gameWalls.length > 0 && (
             <StaggerList className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {gameWalls.map((wall) => {
-                const config = wallConfig[wall.slug] || defaultConfig;
-                return (
-                  <StaggerItem key={wall.id}>
-                    <Link
-                      href={`/earn/${wall.slug}`}
-                      className="earn-card block rounded-2xl bg-[#1d1d2e] border border-[#393e56] hover:border-[#01d676]/40 overflow-hidden transition-all duration-300 group hover:shadow-[0_0_20px_rgba(1,214,118,0.08)]"
-                    >
-                      <div className="flex items-center gap-4 p-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6366f1]/30 to-[#1e1b4b] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                          {wall.logoUrl ? (
-                            <img src={wall.logoUrl} alt={wall.name} className="w-10 h-10 object-contain rounded-lg" />
-                          ) : (
-                            <span className="text-2xl">{wall.icon}</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <h3 className="text-base font-bold text-white group-hover:text-[#01d676] transition-colors truncate">
-                              {wall.name}
-                            </h3>
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#fac401] text-black font-bold text-xs flex-shrink-0">
-                              {config.bonus}
-                            </span>
-                          </div>
-                          <p className="text-[#787ead] text-xs mb-2.5">{config.detail}</p>
-                          <div className="w-full py-2 rounded-lg bg-[#2f3043] text-white font-bold text-xs text-center transition-all group-hover:bg-[#3a3b55] border border-[#393e56]">
-                            Download & Earn {config.bonus} →
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </StaggerItem>
-                );
-              })}
+              {gameWalls.map((wall) => (
+                <StaggerItem key={wall.id}>
+                  <WallCard
+                    name={wall.name}
+                    icon={wall.icon}
+                    logoUrl={wall.logoUrl}
+                    bonusText={wall.bonusText}
+                    bonusDetail={wall.bonusDetail}
+                    section="games"
+                    slug={wall.slug}
+                  />
+                </StaggerItem>
+              ))}
             </StaggerList>
           )}
         </section>
@@ -270,7 +237,8 @@ export default async function EarnPage() {
 
           <StaggerList className={`grid gap-4 ${surveyWalls.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
             {surveyWalls.map((wall) => {
-              const config = wallConfig[wall.slug] || defaultConfig;
+              const bonus = wall.bonusText || '$5';
+              const detail = wall.bonusDetail || 'Complete an offer to claim';
               const isSingle = surveyWalls.length === 1;
 
               if (isSingle) {
@@ -289,17 +257,15 @@ export default async function EarnPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <h3 className="text-lg font-bold text-white group-hover:text-[#01d676] transition-colors">
-                              {wall.name}
-                            </h3>
-                            <span className="px-3 py-1 rounded-full bg-[#01d676] text-black font-bold text-sm flex-shrink-0">
-                              {config.bonus}
-                            </span>
-                          </div>
-                          <p className="text-[#787ead] text-xs mb-3">{config.detail}</p>
+                          <h3 className="text-lg font-bold text-white group-hover:text-[#01d676] transition-colors">
+                            {wall.name}
+                          </h3>
+                          <p className="text-sm font-bold text-[#01d676] mt-0.5">
+                            💰 Earn {bonus} bonus
+                          </p>
+                          <p className="text-[#787ead] text-xs mt-0.5 mb-3">{detail}</p>
                           <div className="w-full md:w-auto md:inline-block px-6 py-2.5 rounded-xl bg-[#01d676] text-black font-bold text-sm text-center transition-all group-hover:bg-[#01ff97] glow-green-cta">
-                            Start Surveys & Earn {config.bonus} →
+                            Start Earning {bonus} →
                           </div>
                         </div>
                       </div>
@@ -310,34 +276,15 @@ export default async function EarnPage() {
 
               return (
                 <StaggerItem key={wall.id}>
-                  <Link
-                    href={`/earn/${wall.slug}`}
-                    className="earn-card block rounded-2xl bg-[#1d1d2e] border border-[#393e56] hover:border-[#01d676]/40 overflow-hidden transition-all duration-300 group hover:shadow-[0_0_20px_rgba(1,214,118,0.08)]"
-                  >
-                    <div className="flex items-center gap-4 p-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#06b6d4]/30 to-[#083344] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                        {wall.logoUrl ? (
-                          <img src={wall.logoUrl} alt={wall.name} className="w-10 h-10 object-contain rounded-lg" />
-                        ) : (
-                          <span className="text-2xl">{wall.icon}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                          <h3 className="text-base font-bold text-white group-hover:text-[#01d676] transition-colors truncate">
-                            {wall.name}
-                          </h3>
-                          <span className="px-2.5 py-0.5 rounded-full bg-[#01d676] text-black font-bold text-xs flex-shrink-0">
-                            {config.bonus}
-                          </span>
-                        </div>
-                        <p className="text-[#787ead] text-xs mb-2.5">{config.detail}</p>
-                        <div className="w-full py-2 rounded-lg bg-[#01d676] text-black font-bold text-xs text-center transition-all group-hover:bg-[#01ff97] glow-green-cta">
-                          Start Surveys & Earn {config.bonus} →
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  <WallCard
+                    name={wall.name}
+                    icon={wall.icon}
+                    logoUrl={wall.logoUrl}
+                    bonusText={wall.bonusText}
+                    bonusDetail={wall.bonusDetail}
+                    section="surveys"
+                    slug={wall.slug}
+                  />
                 </StaggerItem>
               );
             })}
@@ -367,30 +314,14 @@ export default async function EarnPage() {
           <StaggerList className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {saveOffers.map((offer) => (
               <StaggerItem key={offer.id}>
-                <Link
-                  href={`/offers/${offer.slug}`}
-                  className="earn-card block rounded-2xl bg-[#1d1d2e] border border-[#393e56] hover:border-[#fac401]/40 overflow-hidden transition-all duration-300 group hover:shadow-[0_0_20px_rgba(250,196,1,0.08)]"
-                >
-                  <div className="flex items-center gap-4 p-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#f59e0b]/30 to-[#451a03] flex items-center justify-center flex-shrink-0 text-2xl group-hover:scale-105 transition-transform">
-                      {offer.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-0.5">
-                        <h3 className="text-base font-bold text-white group-hover:text-[#fac401] transition-colors truncate">
-                          {offer.headline || offer.name}
-                        </h3>
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#fac401] text-black font-bold text-xs flex-shrink-0">
-                          {formatCurrency(offer.payoutCents)}
-                        </span>
-                      </div>
-                      <p className="text-[#787ead] text-xs mb-2.5 line-clamp-1">{offer.description}</p>
-                      <div className="w-full py-2 rounded-lg bg-[#fac401] text-black font-bold text-xs text-center transition-all group-hover:bg-[#ffbc11] glow-gold-cta">
-                        Claim Offer — Earn {formatCurrency(offer.payoutCents)}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                <OfferCard
+                  name={offer.name}
+                  icon={offer.icon}
+                  headline={offer.headline}
+                  description={offer.description}
+                  payoutCents={offer.payoutCents}
+                  slug={offer.slug}
+                />
               </StaggerItem>
             ))}
           </StaggerList>
@@ -425,15 +356,13 @@ export default async function EarnPage() {
                     🚗
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-base font-bold text-white group-hover:text-[#01d676] transition-colors">
-                        Get paid $2 to compare rates
-                      </h3>
-                      <span className="px-2 py-0.5 rounded-full bg-[#01d676] text-black font-bold text-xs flex-shrink-0">
-                        $2
-                      </span>
-                    </div>
-                    <p className="text-[#787ead] text-xs">Complete an auto insurance form in under 2 minutes</p>
+                    <h3 className="text-base font-bold text-white group-hover:text-[#01d676] transition-colors">
+                      Get paid $2 to compare rates
+                    </h3>
+                    <p className="text-sm font-bold text-[#01d676] mt-0.5">
+                      💰 Earn {formatCurrency(offer.payoutCents)}
+                    </p>
+                    <p className="text-[#787ead] text-xs mt-0.5">Complete an auto insurance form in under 2 minutes</p>
                   </div>
                   <div className="flex-shrink-0 text-[#787ead] group-hover:text-[#01d676] transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
@@ -444,6 +373,11 @@ export default async function EarnPage() {
           </div>
         </section>
       )}
+
+      {/* ── Activity Feed ── */}
+      <div className="mb-10 md:mb-14">
+        <ActivityFeed />
+      </div>
 
       {/* ═══════════════════════════════════════════════ */}
       {/* ── Leaderboard Preview ── */}

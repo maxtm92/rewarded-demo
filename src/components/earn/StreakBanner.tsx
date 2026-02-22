@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { getMultiplier } from '@/lib/streak';
 
-export default function StreakBanner({ compact = false }: { compact?: boolean }) {
+export default function StreakBanner({ compact = false, variant }: { compact?: boolean; variant?: 'full' | 'compact' | 'header' }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [claiming, setClaiming] = useState(false);
@@ -54,6 +54,44 @@ export default function StreakBanner({ compact = false }: { compact?: boolean })
     }
   }
 
+  // Ultra-compact header variant: show placeholder while loading to prevent layout shift
+  if (variant === 'header') {
+    if (!session?.user) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2f3043] text-sm">
+            <span>🔥</span>
+            <span className="text-white font-bold opacity-0">0</span>
+          </span>
+        </div>
+      );
+    }
+    const streak = streakData?.currentStreak ?? session.user.currentStreak ?? 0;
+    const claimed = streakData?.claimedToday ?? false;
+    const multiplier = streakData?.multiplier ?? getMultiplier(streak);
+    const bonusCents = streakData?.nextBonusCents ?? 0;
+    return (
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2f3043] text-sm">
+          <span>🔥</span>
+          <span className="text-white font-bold">{streak}</span>
+          {multiplier > 1 && (
+            <span className="text-[#fac401] text-[10px] font-bold">{multiplier}x</span>
+          )}
+        </span>
+        {!claimed && (
+          <button
+            onClick={claimBonus}
+            disabled={claiming}
+            className="px-2.5 py-1 rounded-lg bg-[#01d676] hover:bg-[#01ff97] text-black text-xs font-bold transition disabled:opacity-50 whitespace-nowrap"
+          >
+            {claiming ? '...' : `Claim ${formatCurrency(bonusCents)}`}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (!session?.user) return null;
 
   const streak = streakData?.currentStreak ?? session.user.currentStreak ?? 0;
@@ -63,7 +101,7 @@ export default function StreakBanner({ compact = false }: { compact?: boolean })
 
   if (compact) {
     return (
-      <div className="flex items-center justify-between gap-3 flex-1 min-w-0">
+      <div className="flex items-center justify-between gap-3 min-w-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="text-xl">🔥</span>
           <span className="text-white font-bold text-sm whitespace-nowrap">{streak} Day Streak</span>

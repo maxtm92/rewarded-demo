@@ -22,21 +22,21 @@ export default function PaginationControls({ currentPage, totalPages, totalItems
 
   return (
     <div className="flex items-center justify-between mt-4 text-sm">
-      <span className="text-gray-400">
+      <span className="text-gray-500">
         {totalItems} total &middot; Page {currentPage} of {totalPages}
       </span>
       <div className="flex gap-2">
         <button
           onClick={() => goToPage(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="px-3 py-1.5 rounded-lg bg-[#2f3043] text-gray-300 hover:bg-[#42435a] transition disabled:opacity-30"
+          className="px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition disabled:opacity-30"
         >
           Prev
         </button>
         <button
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="px-3 py-1.5 rounded-lg bg-[#2f3043] text-gray-300 hover:bg-[#42435a] transition disabled:opacity-30"
+          className="px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition disabled:opacity-30"
         >
           Next
         </button>

@@ -58,7 +58,7 @@ export default async function WithdrawalsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Withdrawals ({totalCount})</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Withdrawals ({totalCount})</h1>
 
       {/* Status Filter */}
       <div className="flex gap-2 mb-4">
@@ -70,8 +70,8 @@ export default async function WithdrawalsPage({ searchParams }: Props) {
               href={buildUrl({ status: s })}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 isActive
-                  ? 'bg-emerald-600/20 text-emerald-400'
-                  : 'bg-[#2f3043] text-gray-400 hover:bg-[#42435a]'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
             >
               {s}
@@ -88,43 +88,43 @@ export default async function WithdrawalsPage({ searchParams }: Props) {
           name="search"
           defaultValue={search || ''}
           placeholder="Search by email, name, or phone..."
-          className="w-full max-w-md px-4 py-2.5 rounded-lg bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+          className="w-full max-w-md px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </form>
 
-      <div className="rounded-xl bg-[#151929] border border-white/5 overflow-auto">
+      <div className="rounded-lg bg-white border border-gray-200 overflow-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/5">
-              <th className="text-left p-3 text-gray-400 font-medium">User</th>
-              <th className="text-left p-3 text-gray-400 font-medium">Method</th>
-              <th className="text-left p-3 text-gray-400 font-medium">Destination</th>
-              <th className="text-right p-3 text-gray-400 font-medium">Amount</th>
-              <th className="text-center p-3 text-gray-400 font-medium">Status</th>
-              <th className="text-left p-3 text-gray-400 font-medium">Date</th>
-              <th className="text-center p-3 text-gray-400 font-medium">Actions</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">User</th>
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Method</th>
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Destination</th>
+              <th className="text-right p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Amount</th>
+              <th className="text-center p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Status</th>
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Date</th>
+              <th className="text-center p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
             {withdrawals.map((w) => (
-              <tr key={w.id} className="border-b border-white/5 last:border-0">
+              <tr key={w.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                 <td className="p-3">
-                  <p className="font-medium text-xs">{w.user.name || w.user.email || w.user.phone || '—'}</p>
+                  <p className="font-medium text-xs text-gray-900">{w.user.name || w.user.email || w.user.phone || '—'}</p>
                 </td>
-                <td className="p-3 text-gray-400">{w.method}</td>
-                <td className="p-3 text-gray-400 text-xs max-w-[200px] truncate">{w.destination || '—'}</td>
-                <td className="p-3 text-right font-medium">{formatCurrency(w.amountCents)}</td>
+                <td className="p-3 text-gray-500">{w.method}</td>
+                <td className="p-3 text-gray-500 text-xs max-w-[200px] truncate">{w.destination || '—'}</td>
+                <td className="p-3 text-right font-medium text-gray-900">{formatCurrency(w.amountCents)}</td>
                 <td className="p-3 text-center">
                   <div>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      w.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' :
-                      w.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' :
-                      w.status === 'PROCESSING' ? 'bg-blue-500/10 text-blue-400' :
-                      'bg-red-500/10 text-red-400'
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      w.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700' :
+                      w.status === 'PENDING' ? 'bg-amber-50 text-amber-700' :
+                      w.status === 'PROCESSING' ? 'bg-blue-50 text-blue-700' :
+                      'bg-red-50 text-red-700'
                     }`}>{w.status}</span>
                     {w.status === 'REJECTED' && w.rejectionReason && (
                       <p
-                        className="text-red-400/70 text-[10px] mt-1 max-w-[150px] truncate"
+                        className="text-red-500 text-[10px] mt-1 max-w-[150px] truncate"
                         title={w.rejectionReason}
                       >
                         {w.rejectionReason}
@@ -132,7 +132,7 @@ export default async function WithdrawalsPage({ searchParams }: Props) {
                     )}
                   </div>
                 </td>
-                <td className="p-3 text-gray-400 text-xs">{new Date(w.createdAt).toLocaleDateString()}</td>
+                <td className="p-3 text-gray-500 text-xs">{new Date(w.createdAt).toLocaleDateString()}</td>
                 <td className="p-3 text-center">
                   {(w.status === 'PENDING' || w.status === 'PROCESSING') && (
                     <WithdrawalActions id={w.id} amountCents={w.amountCents} method={w.method} />
@@ -142,7 +142,7 @@ export default async function WithdrawalsPage({ searchParams }: Props) {
             ))}
             {withdrawals.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-gray-500">
+                <td colSpan={7} className="p-8 text-center text-gray-400">
                   No withdrawals found{search ? ` matching "${search}"` : ''}
                 </td>
               </tr>

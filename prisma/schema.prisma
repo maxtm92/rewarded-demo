@@ -271,6 +271,12 @@ model OfferWall {
   sortOrder        Int     @default(0) @map("sort_order")
   icon             String  @default("💰")
 
+  // Earn page control
+  bonusText   String?  @map("bonus_text")    // e.g. "$10", "$5"
+  bonusDetail String?  @map("bonus_detail")  // e.g. "Must complete one game to claim"
+  section     String   @default("games")     // "games" or "surveys"
+  isFeatured  Boolean  @default(false) @map("is_featured")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

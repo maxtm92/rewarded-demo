@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import ConfirmDialog from './ConfirmDialog';
+import OfferCard from '@/components/earn/cards/OfferCard';
 
 interface Offer {
   id: string;
@@ -116,30 +117,30 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
     <div>
       <button
         onClick={() => showForm ? handleCancel() : setShowForm(true)}
-        className="mb-4 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm transition"
+        className="mb-4 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 font-medium text-sm transition"
       >
         {showForm ? 'Cancel' : '+ Add Offer'}
       </button>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="p-6 rounded-xl bg-[#151929] border border-white/5 mb-6 grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="p-6 rounded-lg bg-white border border-gray-200 shadow-sm mb-6 grid grid-cols-2 gap-4">
           {(['slug', 'name', 'headline', 'description', 'payoutCents', 'category', 'externalUrl', 'icon'] as const).map((field) => (
             <div key={field} className={field === 'description' ? 'col-span-2' : ''}>
-              <label className="text-xs text-gray-400 mb-1 block capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+              <label className="text-xs text-gray-500 mb-1 block capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
               <input
                 value={form[field]}
                 onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
                 required={['slug', 'name', 'headline', 'description', 'payoutCents', 'externalUrl'].includes(field)}
-                className="w-full px-3 py-2 rounded-lg bg-[#0A0E1A] border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           ))}
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Marketing Angle</label>
+            <label className="text-xs text-gray-500 mb-1 block">Marketing Angle</label>
             <select
               value={form.angleId}
               onChange={(e) => setForm((f) => ({ ...f, angleId: e.target.value }))}
-              className="w-full px-3 py-2 rounded-lg bg-[#0A0E1A] border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">None</option>
               {angles.map((a) => (
@@ -148,45 +149,61 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
             </select>
           </div>
           <div className="col-span-2">
-            <button type="submit" className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-sm">
+            <button type="submit" className="px-6 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 font-medium text-sm transition">
               {editingId ? 'Update Offer' : 'Create Offer'}
             </button>
+          </div>
+
+          {/* Live Preview */}
+          <div className="col-span-2 mt-2 pt-6 border-t border-gray-200">
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-3">Live Preview</p>
+            <div className="rounded-2xl bg-[#0f1020] p-6">
+              <div className="max-w-md">
+                <OfferCard
+                  name={form.name || 'Offer Name'}
+                  icon={form.icon || '💰'}
+                  headline={form.headline || null}
+                  description={form.description || 'Offer description...'}
+                  payoutCents={parseInt(form.payoutCents) || 0}
+                />
+              </div>
+            </div>
           </div>
         </form>
       )}
 
-      <div className="rounded-xl bg-[#151929] border border-white/5 overflow-hidden">
+      <div className="rounded-lg bg-white border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/5">
-              <th className="text-left p-3 text-gray-400 font-medium">Offer</th>
-              <th className="text-left p-3 text-gray-400 font-medium">Category</th>
-              <th className="text-right p-3 text-gray-400 font-medium">Payout</th>
-              <th className="text-center p-3 text-gray-400 font-medium">Completions</th>
-              <th className="text-center p-3 text-gray-400 font-medium">Active</th>
-              <th className="text-center p-3 text-gray-400 font-medium">Actions</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Offer</th>
+              <th className="text-left p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Category</th>
+              <th className="text-right p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Payout</th>
+              <th className="text-center p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Completions</th>
+              <th className="text-center p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Active</th>
+              <th className="text-center p-3 text-gray-500 text-xs font-medium uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
             {offers.map((offer) => (
-              <tr key={offer.id} className="border-b border-white/5 last:border-0">
+              <tr key={offer.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                 <td className="p-3">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{offer.icon}</span>
                     <div>
-                      <p className="font-medium">{offer.name}</p>
+                      <p className="font-medium text-gray-900">{offer.name}</p>
                       <p className="text-gray-500 text-xs">{offer.headline}</p>
                     </div>
                   </div>
                 </td>
-                <td className="p-3 text-gray-400 capitalize">{offer.category.replace('_', ' ')}</td>
-                <td className="p-3 text-right font-medium text-amber-400">{formatCurrency(offer.payoutCents)}</td>
-                <td className="p-3 text-center">{offer._count.completions}</td>
+                <td className="p-3 text-gray-500 capitalize">{offer.category.replace('_', ' ')}</td>
+                <td className="p-3 text-right font-medium text-amber-600">{formatCurrency(offer.payoutCents)}</td>
+                <td className="p-3 text-center text-gray-900">{offer._count.completions}</td>
                 <td className="p-3 text-center">
                   <button
                     onClick={() => toggleActive(offer.id, offer.isActive)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      offer.isActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                      offer.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
                     }`}
                   >
                     {offer.isActive ? 'Active' : 'Off'}
@@ -196,13 +213,13 @@ export default function PremiumOffersAdmin({ initialOffers, angles }: { initialO
                   <div className="flex gap-1 justify-center">
                     <button
                       onClick={() => handleEdit(offer)}
-                      className="px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-xs hover:bg-blue-500/20 transition"
+                      className="px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs hover:bg-blue-100 transition"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => setDeleteId(offer.id)}
-                      className="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition"
+                      className="px-2 py-1 rounded bg-red-50 text-red-700 text-xs hover:bg-red-100 transition"
                     >
                       Delete
                     </button>
