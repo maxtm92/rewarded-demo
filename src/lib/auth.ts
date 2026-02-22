@@ -4,6 +4,7 @@ import Apple from 'next-auth/providers/apple';
 import Resend from 'next-auth/providers/resend';
 import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
+import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 import { generateReferralCode } from './referral';
 import { sendWelcomeEmail } from './email';
@@ -62,6 +63,27 @@ const providers = [
         if (!user) {
           user = await prisma.user.create({ data: { phone } });
         }
+        return { id: user.id, name: user.name, email: user.email, image: user.image };
+      },
+    }),
+    Credentials({
+      id: 'email-password',
+      name: 'Email & Password',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email as string;
+        const password = credentials?.password as string;
+        if (!email || !password) return null;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.password) return null;
+
+        const isValid = await bcrypt.compare(password, user.password);
+        if (!isValid) return null;
+
         return { id: user.id, name: user.name, email: user.email, image: user.image };
       },
     }),

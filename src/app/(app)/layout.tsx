@@ -135,7 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {/* Balance */}
                 <div className="balance-badge rounded-full px-3 py-1.5 flex items-center gap-1.5 tabular-nums">
                   <span className="text-[#01d676] font-semibold text-sm">$</span>
-                  <span className="text-white font-semibold text-sm">
+                  <span className="text-white font-semibold text-sm inline-block min-w-[3.5ch] text-right">
                     <AnimatedBalance value={session.user.balanceCents} />
                   </span>
                 </div>

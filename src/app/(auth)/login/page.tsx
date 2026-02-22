@@ -51,6 +51,11 @@ export default function LoginPage() {
   const [tab, setTab] = useState<Tab>('email');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [emailMode, setEmailMode] = useState<'magic' | 'password'>('password');
+  const [isRegistering, setIsRegistering] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [code, setCode] = useState('');
@@ -72,6 +77,64 @@ export default function LoginPage() {
       setEmailSent(true);
     } catch {
       toast.error('Failed to send magic link. Please try again.');
+    } finally {
+      setLoading(false);
+      setLoadingProvider(null);
+    }
+  }
+
+  async function handlePasswordSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    const emailErr = validateEmail(email);
+    if (emailErr) { setEmailError(emailErr); return; }
+    if (!password) { setPasswordError('Password is required'); return; }
+    setLoading(true);
+    setLoadingProvider('email');
+    setPasswordError(null);
+    try {
+      const res = await signIn('email-password', { email, password, redirect: false });
+      if (res?.error) {
+        setPasswordError('Invalid email or password');
+      } else if (res?.ok) {
+        window.location.href = '/survey';
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+      setLoadingProvider(null);
+    }
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault();
+    const emailErr = validateEmail(email);
+    if (emailErr) { setEmailError(emailErr); return; }
+    if (password.length < 8) { setPasswordError('Password must be at least 8 characters'); return; }
+    if (password !== confirmPassword) { setPasswordError('Passwords do not match'); return; }
+    setLoading(true);
+    setLoadingProvider('email');
+    setPasswordError(null);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPasswordError(data.error || 'Registration failed');
+        return;
+      }
+      // Auto sign-in after registration
+      const signInRes = await signIn('email-password', { email, password, redirect: false });
+      if (signInRes?.ok) {
+        window.location.href = '/survey';
+      } else {
+        setPasswordError('Registered but failed to sign in. Please try logging in.');
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
       setLoadingProvider(null);
@@ -271,7 +334,7 @@ export default function LoginPage() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
-                            onSubmit={handleEmailSignIn}
+                            onSubmit={emailMode === 'magic' ? handleEmailSignIn : isRegistering ? handleRegister : handlePasswordSignIn}
                             className="space-y-3"
                           >
                             <div>
@@ -296,13 +359,80 @@ export default function LoginPage() {
                                 </motion.p>
                               )}
                             </div>
+
+                            {emailMode === 'password' && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="space-y-3"
+                              >
+                                <input
+                                  type="password"
+                                  value={password}
+                                  onChange={(e) => { setPassword(e.target.value); setPasswordError(null); }}
+                                  placeholder={isRegistering ? 'Create a password (min 8 chars)' : 'Enter your password'}
+                                  required
+                                  className="w-full px-4 py-3 rounded-xl bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition"
+                                />
+                                {isRegistering && (
+                                  <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(null); }}
+                                    placeholder="Confirm password"
+                                    required
+                                    className="w-full px-4 py-3 rounded-xl bg-[#2f3043] border border-[#393e56] text-white text-sm placeholder-[#787ead] focus:outline-none focus:border-[#01d676] transition"
+                                  />
+                                )}
+                                {passwordError && (
+                                  <motion.p
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-red-400 text-xs mt-1.5 ml-1"
+                                  >
+                                    {passwordError}
+                                  </motion.p>
+                                )}
+                              </motion.div>
+                            )}
+
                             <button
                               type="submit"
                               disabled={loading}
                               className="w-full py-3 rounded-xl bg-[#01d676] hover:bg-[#01ff97] text-black font-semibold text-sm transition disabled:opacity-50 glow-green-cta flex items-center justify-center gap-2"
                             >
-                              {loadingProvider === 'email' ? <><Spinner /> Sending...</> : 'Send Magic Link'}
+                              {loadingProvider === 'email' ? (
+                                <><Spinner /> {emailMode === 'magic' ? 'Sending...' : isRegistering ? 'Creating Account...' : 'Signing In...'}</>
+                              ) : (
+                                emailMode === 'magic' ? 'Send Magic Link' : isRegistering ? 'Create Account' : 'Sign In'
+                              )}
                             </button>
+
+                            {emailMode === 'password' && (
+                              <p className="text-center text-xs text-[#787ead]">
+                                {isRegistering ? (
+                                  <>Already have an account?{' '}
+                                    <button type="button" onClick={() => { setIsRegistering(false); setPasswordError(null); setConfirmPassword(''); }} className="text-[#01d676] hover:underline">Sign in</button>
+                                  </>
+                                ) : (
+                                  <>New here?{' '}
+                                    <button type="button" onClick={() => { setIsRegistering(true); setPasswordError(null); }} className="text-[#01d676] hover:underline">Create account</button>
+                                  </>
+                                )}
+                              </p>
+                            )}
+
+                            <p className="text-center text-xs text-[#787ead]">
+                              {emailMode === 'magic' ? (
+                                <>Or{' '}
+                                  <button type="button" onClick={() => { setEmailMode('password'); setPasswordError(null); }} className="text-[#01d676] hover:underline">use a password</button>
+                                </>
+                              ) : (
+                                <>Or{' '}
+                                  <button type="button" onClick={() => { setEmailMode('magic'); setPasswordError(null); setIsRegistering(false); }} className="text-[#01d676] hover:underline">use a magic link</button>
+                                </>
+                              )}
+                            </p>
                           </motion.form>
                         )}
 

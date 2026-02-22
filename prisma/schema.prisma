@@ -63,6 +63,7 @@ model User {
   emailVerified DateTime? @map("email_verified")
   image         String?
   phone         String?   @unique
+  password      String?
 
   // App-specific fields
   balanceCents    Int      @default(0) @map("balance_cents")
