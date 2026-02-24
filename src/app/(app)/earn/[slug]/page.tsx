@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getCachedTrackingLink } from '@/lib/everflow';
 import OfferWallEmbed from '@/components/earn/OfferWallEmbed';
 import PageTransition from '@/components/animations/PageTransition';
 
@@ -21,14 +22,28 @@ export default async function OfferWallPage({ params }: Props) {
 
   if (!wall || !wall.isActive) return notFound();
 
-  // Build the URL with userId as sub-parameter
-  const embedUrl = wall.iframeUrl
-    ? `${wall.iframeUrl}${wall.iframeUrl.includes('?') ? '&' : '?'}sub_id=${session.user.id}`
-    : null;
+  // Build tracking URL via Everflow API (with fallback to manual construction)
+  let redirectUrl: string | null = null;
 
-  const redirectUrl = wall.redirectUrl
-    ? `${wall.redirectUrl}${wall.redirectUrl.includes('?') ? '&' : '?'}sub_id=${session.user.id}`
-    : null;
+  if (wall.everflowOfferId && process.env.EVERFLOW_API_KEY) {
+    try {
+      const affId = parseInt(wall.everflowAffId || process.env.EVERFLOW_AFF_ID || '1');
+      redirectUrl = await getCachedTrackingLink({
+        offerId: parseInt(wall.everflowOfferId),
+        affiliateId: affId,
+        sub1: session.user.id,
+      });
+    } catch (err) {
+      console.error('[Everflow] Failed to generate tracking link, falling back:', err);
+      const everflowDomain = process.env.EVERFLOW_DOMAIN;
+      if (everflowDomain) {
+        const affId = wall.everflowAffId || process.env.EVERFLOW_AFF_ID || '1';
+        redirectUrl = `https://${everflowDomain}/click?oid=${wall.everflowOfferId}&affid=${affId}&sub1=${session.user.id}`;
+      }
+    }
+  } else if (wall.redirectUrl) {
+    redirectUrl = `${wall.redirectUrl}${wall.redirectUrl.includes('?') ? '&' : '?'}sub_id=${session.user.id}`;
+  }
 
   return (
     <PageTransition>
@@ -42,7 +57,8 @@ export default async function OfferWallPage({ params }: Props) {
 
       <OfferWallEmbed
         name={wall.name}
-        iframeUrl={embedUrl}
+        slug={wall.slug}
+        iframeUrl={null}
         redirectUrl={redirectUrl}
       />
     </PageTransition>

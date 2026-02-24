@@ -10,43 +10,34 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // Seed offerwalls
+  // Seed offerwalls (FreeCash + Playful only, with Everflow integration)
   const walls = [
     {
       slug: 'freecash',
       name: 'Freecash',
-      description: 'Play games and complete offers to earn rewards',
+      description: 'Play games and complete offers to earn $10 per offer',
       icon: '🎮',
       logoUrl: 'https://www.google.com/s2/favicons?domain=freecash.com&sz=128',
       postbackSecret: process.env.FREECASH_POSTBACK_SECRET || 'dev-secret-freecash',
+      everflowOfferId: process.env.FREECASH_EVERFLOW_OFFER_ID || null,
+      everflowAffId: process.env.FREECASH_EVERFLOW_AFF_ID || null,
+      bonusText: '$10',
+      bonusDetail: 'Complete 1 offer to claim $10',
+      isFeatured: true,
       sortOrder: 1,
     },
     {
       slug: 'playful',
       name: 'Playful',
-      description: 'Play games and get rewarded instantly',
+      description: 'Play games and get rewarded — $10 per completed offer',
       icon: '🕹️',
       logoUrl: 'https://www.google.com/s2/favicons?domain=playfulrewards.com&sz=128',
       postbackSecret: process.env.PLAYFUL_POSTBACK_SECRET || 'dev-secret-playful',
+      everflowOfferId: process.env.PLAYFUL_EVERFLOW_OFFER_ID || null,
+      everflowAffId: process.env.PLAYFUL_EVERFLOW_AFF_ID || null,
+      bonusText: '$10',
+      bonusDetail: 'Complete 1 offer to claim $10',
       sortOrder: 2,
-    },
-    {
-      slug: 'tester',
-      name: 'Tester',
-      description: 'Test apps and earn rewards for your feedback',
-      icon: '🧪',
-      logoUrl: 'https://www.google.com/s2/favicons?domain=testerup.com&sz=128',
-      postbackSecret: process.env.TESTER_POSTBACK_SECRET || 'dev-secret-tester',
-      sortOrder: 3,
-    },
-    {
-      slug: 'fluent',
-      name: 'Fluent Surveys',
-      description: 'Complete surveys and share your opinion for cash',
-      icon: '📋',
-      logoUrl: 'https://www.google.com/s2/favicons?domain=fluentco.com&sz=128',
-      postbackSecret: process.env.FLUENT_POSTBACK_SECRET || 'dev-secret-fluent',
-      sortOrder: 4,
     },
   ];
 
@@ -55,90 +46,6 @@ async function main() {
       where: { slug: wall.slug },
       update: wall,
       create: wall,
-    });
-  }
-
-  // Seed premium offers
-  const offers = [
-    {
-      slug: 'auto-insurance-quote',
-      name: 'Auto Insurance Quote',
-      headline: 'Save up to $500 on Auto Insurance',
-      description: 'Compare rates from top providers and get a free quote. Earn $50 just for completing your quote!',
-      payoutCents: 5000,
-      category: 'auto_insurance',
-      externalUrl: 'https://example.com/auto-insurance',
-      icon: '🚗',
-      imageUrl: 'https://images.pexels.com/photos/210019/pexels-photo-210019.jpeg?auto=compress&cs=tinysrgb&w=800',
-      sortOrder: 1,
-    },
-    {
-      slug: 'credit-card-offer',
-      name: 'Premium Credit Card',
-      headline: 'Get $200 Cash Back with This Card',
-      description: 'Apply for a premium rewards card and earn a sign-up bonus plus cash back on every purchase.',
-      payoutCents: 3000,
-      category: 'credit_card',
-      externalUrl: 'https://example.com/credit-card',
-      icon: '💳',
-      imageUrl: 'https://images.pexels.com/photos/164501/pexels-photo-164501.jpeg?auto=compress&cs=tinysrgb&w=800',
-      sortOrder: 2,
-    },
-    {
-      slug: 'home-security',
-      name: 'Home Security System',
-      headline: 'Protect Your Home — Free Installation',
-      description: 'Get a free home security consultation and quote. Professional installation included.',
-      payoutCents: 4000,
-      category: 'home_security',
-      externalUrl: 'https://example.com/home-security',
-      icon: '🏠',
-      imageUrl: 'https://images.pexels.com/photos/207574/pexels-photo-207574.jpeg?auto=compress&cs=tinysrgb&w=800',
-      sortOrder: 3,
-    },
-  ];
-
-  for (const offer of offers) {
-    await prisma.premiumOffer.upsert({
-      where: { slug: offer.slug },
-      update: offer,
-      create: offer,
-    });
-  }
-
-  // Seed marketing angles
-  const angles = [
-    {
-      slug: 'save-money',
-      name: 'Save Money Angle',
-      headline: 'Save $500+ on Your Car Insurance',
-      subheadline: 'Compare rates from 10+ providers in 2 minutes',
-      ctaText: 'Get My Free Quote',
-      weight: 3,
-    },
-    {
-      slug: 'quick-easy',
-      name: 'Quick & Easy Angle',
-      headline: 'Get Your Free Quote in Under 2 Minutes',
-      subheadline: 'No commitment, no hassle — just savings',
-      ctaText: 'Start Saving Now',
-      weight: 2,
-    },
-    {
-      slug: 'comparison',
-      name: 'Comparison Angle',
-      headline: 'Are You Overpaying for Insurance?',
-      subheadline: 'See how much you could save by switching today',
-      ctaText: 'Compare Rates Free',
-      weight: 1,
-    },
-  ];
-
-  for (const angle of angles) {
-    await prisma.marketingAngle.upsert({
-      where: { slug: angle.slug },
-      update: angle,
-      create: angle,
     });
   }
 

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import AnimatedBalance from '@/components/animations/AnimatedBalance';
 import StreakBanner from '@/components/earn/StreakBanner';
+import NotificationBell from '@/components/NotificationBell';
+import FunnelTracker from '@/components/FunnelTracker';
 
 /* ── Inline SVG Icons ──────────────────────────── */
 
@@ -132,6 +134,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     🤝
                   </Link>
                 </div>
+                {/* Notifications */}
+                <NotificationBell />
                 {/* Balance */}
                 <div className="balance-badge rounded-full px-3 py-1.5 flex items-center gap-1.5 tabular-nums">
                   <span className="text-[#01d676] font-semibold text-sm">$</span>
@@ -160,6 +164,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
+
+      {/* ── Funnel Tracker ── */}
+      <FunnelTracker />
 
       {/* ── Main Content ── */}
       <main className="max-w-7xl mx-auto px-4 py-6">

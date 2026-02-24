@@ -4,14 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { REFERRAL_COMMISSION_RATE } from '@/lib/referral';
 import { checkAndAwardAchievements } from '@/lib/achievements';
+import { getLocationFromIP, parseUserAgent } from '@/lib/geolocation';
 
 const surveySchema = z.object({
   ageRange: z.string().optional(),
   gender: z.string().optional(),
-  interests: z.array(z.string()).default([]),
-  income: z.string().optional(),
-  country: z.string().optional(),
-  zipCode: z.string().optional(),
+  timeAvailable: z.string().optional(),
 });
 
 const SIGNUP_BONUS_CENTS = 500; // $5.00
@@ -107,8 +105,44 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Funnel event
+      await tx.funnelEvent.create({
+        data: {
+          userId: session.user.id,
+          event: 'survey_complete',
+          metadata: data,
+        },
+      });
+
       await checkAndAwardAchievements(tx, session.user.id);
     });
+
+    // IP geolocation + device detection (fire-and-forget, outside transaction)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || '';
+    const ua = request.headers.get('user-agent');
+
+    Promise.all([
+      getLocationFromIP(ip),
+      Promise.resolve(parseUserAgent(ua)),
+    ]).then(async ([geo, device]) => {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          ipCountry: geo.country,
+          ipRegion: geo.region,
+          ipCity: geo.city,
+          ipZipcode: geo.zipcode,
+          deviceType: device.deviceType,
+          browser: device.browser,
+          os: device.os,
+        },
+      });
+    }).catch((err) => {
+      console.error('Geolocation/device detection failed:', err);
+    });
+
   } catch (err) {
     if (err instanceof Error && err.message === 'Survey already completed') {
       return NextResponse.json({ error: 'Survey already completed' }, { status: 409 });

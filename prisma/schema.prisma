@@ -68,12 +68,23 @@ model User {
   // App-specific fields
   balanceCents    Int      @default(0) @map("balance_cents")
   lifetimeCents   Int      @default(0) @map("lifetime_cents")
-  marketingOptIn  Boolean  @default(false) @map("marketing_opt_in")
-  onboardingDone  Boolean  @default(false) @map("onboarding_done")
-  profileComplete Boolean  @default(false) @map("profile_complete")
-  role            UserRole @default(USER)
-  pushToken       String?  @map("push_token")
-  isBanned        Boolean  @default(false) @map("is_banned")
+  marketingOptIn    Boolean  @default(false) @map("marketing_opt_in")
+  marketingSmsOptIn Boolean  @default(false) @map("marketing_sms_opt_in")
+  phoneOptInBonus   Boolean  @default(false) @map("phone_opt_in_bonus")
+  onboardingDone    Boolean  @default(false) @map("onboarding_done")
+  profileComplete   Boolean  @default(false) @map("profile_complete")
+  role              UserRole @default(USER)
+  pushToken         String?  @map("push_token")
+  isBanned          Boolean  @default(false) @map("is_banned")
+
+  // IP geolocation & device info
+  ipCountry  String? @map("ip_country")
+  ipRegion   String? @map("ip_region")
+  ipCity     String? @map("ip_city")
+  ipZipcode  String? @map("ip_zipcode")
+  deviceType String? @map("device_type")
+  browser    String? @map("browser")
+  os         String? @map("os")
 
   // Referral system
   referralCode String? @unique @map("referral_code")
@@ -102,6 +113,8 @@ model User {
   referralEarningsAsReferred ReferralEarning[] @relation("ReferredEarnings")
   achievements            UserAchievement[]
   leaderboardEntries      LeaderboardEntry[]
+  funnelEvents            FunnelEvent[]
+  notifications           Notification[]
 
   @@map("users")
 }
@@ -272,6 +285,15 @@ model OfferWall {
   sortOrder        Int     @default(0) @map("sort_order")
   icon             String  @default("💰")
 
+  // Everflow integration
+  everflowOfferId    String?   @map("everflow_offer_id")
+  everflowAffId      String?   @map("everflow_aff_id")
+  everflowOfferName  String?   @map("everflow_offer_name")
+  everflowStatus     String?   @map("everflow_status")
+  everflowPayoutType String?   @map("everflow_payout_type")
+  everflowDestUrl    String?   @map("everflow_dest_url")
+  everflowLastSyncAt DateTime? @map("everflow_last_sync_at")
+
   // Earn page control
   bonusText   String?  @map("bonus_text")    // e.g. "$10", "$5"
   bonusDetail String?  @map("bonus_detail")  // e.g. "Must complete one game to claim"
@@ -326,6 +348,7 @@ model SurveyResponse {
   income        String?
   country       String?
   zipCode       String?   @map("zip_code")
+  timeAvailable String?   @map("time_available")
   completedAt   DateTime? @map("completed_at")
   bonusCredited Boolean   @default(false) @map("bonus_credited")
 
@@ -424,4 +447,38 @@ model PremiumOfferCompletion {
 
   @@unique([userId, offerId])
   @@map("premium_offer_completions")
+}
+
+// ─── Funnel event tracking ─────────────────────────────────────────
+
+model FunnelEvent {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  event     String   // page_view, offer_click, offer_complete, survey_complete, phone_optin, withdrawal_request
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([event, createdAt])
+  @@map("funnel_events")
+}
+
+// ─── In-app notifications ──────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  type      String    // offer_complete, phone_bonus, etc.
+  title     String
+  message   String
+  data      Json?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
 }

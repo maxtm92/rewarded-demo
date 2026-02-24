@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const sidebarItems = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
   { href: '/admin/offerwalls', label: 'Offerwalls', icon: '🏪' },
+  { href: '/admin/everflow', label: 'Everflow', icon: '🔗' },
   { href: '/admin/offers', label: 'Premium Offers', icon: '🔥' },
   { href: '/admin/angles', label: 'Marketing Angles', icon: '🎯' },
   { href: '/admin/users', label: 'Users', icon: '👥' },
